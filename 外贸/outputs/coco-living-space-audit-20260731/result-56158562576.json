@@ -1,0 +1,14 @@
+{
+  "itemId": "56158562576",
+  "status": "verification_required",
+  "url": "https://shopee.com.my/product/115498741/56158562576",
+  "verifiedAt": "2026-07-31T20:23:04+08:00",
+  "confidence": {
+    "pageFields": "unknown",
+    "cartPrice": "unknown",
+    "reviewThemes": "unknown",
+    "unseenPerformance": "unknown"
+  },
+  "cartRestored": true,
+  "evidenceNote": "用户报告上一验证页面已关闭后，本轮重新尝试 canonical URL，页面先为空白通用 Shopee 页面；再用现有清单中的 SEO URL 重试，3秒后明确跳转到 /verify/captcha，scene=crawler_item，页面显示 Loading Issue / Try Again。按协议立即停止，未读取商品字段、未进行购物车操作，也不推断商品状态。等待用户在保留页面完成验证后重试本商品。"
+}

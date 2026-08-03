@@ -1,0 +1,13 @@
+{
+  "schemaVersion": 1,
+  "shopUrl": "https://shopee.com.my/pengkuna.my?page=0&sortBy=sales&tab=0",
+  "shopName": "COCO Living Space",
+  "region": "MY",
+  "createdAt": "2026-07-31T19:47:47+08:00",
+  "minDelaySeconds": 30.0,
+  "reviewSampleSize": 6,
+  "quantityTest": 10,
+  "variantPolicy": "first_enabled",
+  "cartBaselineCount": null,
+  "catalogExpectedCount": 885
+}

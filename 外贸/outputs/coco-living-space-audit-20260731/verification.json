@@ -1,0 +1,43 @@
+{
+  "verifiedAt": "2026-07-31T17:08:36.072Z",
+  "validState": true,
+  "workbookPath": "/Users/ddy/GolandProjects/Plans/Business-Plan/外贸/outputs/coco-living-space-audit-20260731/COCO_Living_Space_Shopee全量审计_持续更新.xlsx",
+  "catalogRows": 885,
+  "uniqueItemIds": 885,
+  "imageAnchors": 967,
+  "expectedImages": 967,
+  "allSheetImageAnchors": 885,
+  "allSheetExpectedImages": 885,
+  "highSalesImageAnchors": 82,
+  "highSalesExpectedImages": 82,
+  "statusCounts": {
+    "verified": 14,
+    "partial": 85,
+    "inaccessible": 0,
+    "verification_required": 1,
+    "blocked_cart_safety": 0,
+    "blocked_login": 0,
+    "pending": 785
+  },
+  "detailTotalSalesCount": 99,
+  "safeCartPriceCount": 14,
+  "reviewSummaryCount": 48,
+  "completeReviewCount": 0,
+  "highSalesThreshold": 500,
+  "highSalesSourceField": "detail totalSoldLower",
+  "highSalesRows": 82,
+  "formulaErrorScan": "{\"kind\":\"notice\",\"message\":\"Cell search matched 0 entries.\"}",
+  "exportedFormulaErrorScan": "{\"kind\":\"notice\",\"message\":\"Cell search matched 0 entries.\"}",
+  "exportedWorkbookReopened": true,
+  "overviewInspection": "{\"kind\":\"table\",\"sheet\":\"概览\",\"address\":\"A1:H12\",\"rows\":12,\"cols\":8,\"values\":[[\"COCO Living Space｜Shopee 全量店铺审计\",null,null,null,null,null,null,null],[\"店铺：COCO Living Space｜区域：MY｜清单采集：2026-07-30T00:00:00+08:00｜本次状态更新：2026-07-31T23:35:50+08:00\",null,null,null,null,null,null,null],[null,null,null,null,null,null,null,null],[\"清单商品数\",885,null,\"数据口径与置信度限制\",null,null,null,null],[\"详情总销量有证据\",99,null,\"1. 近月销量来自店铺列表；累计总销量只使用详情页文字，二者不混用。\\n2. ‘k+ Sold’只记下限，不当作精确销量。\\n3. 购物车价格只统计已确认测试商品被精确移除且购物车恢复的记录；旧表中缺少恢复证据的历史金额不再计为已核验。\\n4. 价格仅适用于被测变体、数量、账号和时间；未扣优惠券、运费、积分或结账优惠。\\n5. 评论摘要只代表可见样本；未翻完全部评论时均为部分覆盖。\\n6. 当前出现验证码时必须暂停，不能把未访问字段猜成零或下架。\",null,null,null,null],[\"购物车价格安全核验\",14,null,null,null,null,null,null],[\"评论已有摘要\",48,null,null,null,null,null,null],[\"评论完整翻页\",0,null,null,null,null,null,null],[\"已核验\",14,null,null,null,null,null,null],[\"部分核验\",85,null,null,null,null,null,null],[\"需要验证码\",1,null,null,null,null,null,null],[\"仍待核验\",785,null,null,null,null,null,null]]}",
+  "renderedSheets": [
+    "概览",
+    "全部商品",
+    "高销量商品",
+    "深度核验"
+  ],
+  "imagePreviewSheets": [
+    "全部商品",
+    "高销量商品"
+  ]
+}
