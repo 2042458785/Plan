@@ -1,0 +1,40 @@
+{
+  "tool": "imagegen built-in",
+  "purpose": "素序精品店概念素材。非实拍，不代表用户实际商品或材质。",
+  "prompts": {
+    "hero": "Use case: ads-marketing. Asset: wide landscape luxury accessories boutique web campaign photograph, 1536x1024 or wider. Create an exquisitely art-directed photorealistic still life: a sculptural crescent-shaped cream cotton canvas shoulder bag with dark espresso leather curved handles and subtle brass fixtures sits on a pale travertine plinth, a fine silver solitaire moissanite ring and a small gold botanical bag charm rest nearby. Warm off-white architectural room, hazy sunlight from upper right, sharp window shadows across limestone and softly draped ivory fabric. Editorial haute couture campaign, tactile natural cotton weave, sculptural lighting, elegant understated color palette. Main subjects right of center, left half airy blank warm cream for website typography overlay. No text, no logos, no brand monograms, no watermarks, no food. Distinctive independent artisan accessories brand. Commercial photograph quality, careful craftsmanship, realistic materials.",
+    "bag": "Use case: product-mockup. Asset: luxury online boutique product catalog photograph, square. One beautiful cream canvas crescent shoulder tote with sculptural dark espresso leather handles, fine visible cotton texture and quiet brass fixtures, photographed three-quarter frontal standing on warm very pale ivory seamless background, elegant natural side light and soft floor shadow, refined contemporary luxury editorial product photography. Product fully visible centered and occupying 70 percent of canvas, lots of breathing room. No text, no logos, no branding, no watermark, no food.",
+    "ring": "Use case: product-mockup. Asset: square high jewelry ecommerce catalog photograph. Exquisite slender white silver-colored six-prong solitaire ring with one brilliant round clear moissanite stone on a delicate pavé band. Stand upright slight three-quarter angle on softly lit warm ivory limestone surface, macro detailed gemstone facets, tasteful realistic light reflections not fake starbursts, understated high jewelry campaign, shallow soft shadow. Entire ring centered with room around it, 65 percent of image. Background warm very pale ivory with no text, no logos, no watermark.",
+    "jewelry": "Use case: product-mockup. Asset: square luxury jewelry ecommerce photograph. A pair of small organic sculptural gold-plated silver teardrop hoop earrings, one upright and one resting gently beside it, exquisite brushed and polished gold texture, gracefully rounded silhouette, photographed on warm ivory matte background with soft directional natural light. Entire pieces visible centered with breathing room, restrained sophisticated luxury house editorial style, soft subtle floor shadow, high detail. No text, logo, watermark or brand.",
+    "charm": "Use case: product-mockup. Asset: square luxury accessory boutique product catalog photograph. One artistic little bag charm made of a three-dimensional ivory fabric camellia flower with stitched petals, a small brushed gold circular clasp and short cream knotted cord, lying elegantly on warm very pale ivory paper with a soft diagonal sunlight shadow. Refined craftsmanship, realistic cotton textures, minimal luxury jewelry editorial photography, object centered occupying 60 percent of frame with lots of quiet negative space. No text, no logos, no watermark.",
+    "bag-noir": "Use case: product-mockup. Square luxury boutique ecommerce photo. One black washed canvas small hobo shoulder bag with curved handles, no logos, refined architectural crescent silhouette, delicate dull silver buckle. Tactile soft fabric, positioned upright three-quarter view centered on very pale warm ivory studio backdrop, gentle natural directional light and soft floor shadow. Minimal luxury campaign photography, product fully visible with large breathing room. No text, watermark, no food.",
+    "necklace": "Use case: product-mockup. Square fine jewelry ecommerce still life photograph. A delicate gold-plated silver fine chain necklace loosely arranged in a graceful elliptical shape on warm ivory paper, with a small organic irregular oval pendant at the bottom, polished softly brushed gold. Understated contemporary artisan jewelry design, soft natural daylight, exquisite macro material realism, quiet warm whites, entire necklace inside frame, ample negative space, refined commercial photography. No logo, text or watermark.",
+    "charm-green": "Use case: product-mockup. Square luxury accessory ecommerce product photograph. One small moss-green hand-knotted cotton cord bag charm with a polished dark green oval stone-look bead and a subtle small brushed gold round clasp, an elegant miniature knotted pendant for a canvas bag. Top-down studio shot, all of charm fully visible at center on very pale ivory matte paper, soft sunlight, handwoven tactile cotton fibers, refined restrained luxury editorial photography. No logos, text, watermark, no food."
+  },
+  "files": [
+    {
+      "asset": "frontend/public/images/hero.jpg"
+    },
+    {
+      "asset": "frontend/public/images/bag.jpg"
+    },
+    {
+      "asset": "frontend/public/images/ring.jpg"
+    },
+    {
+      "asset": "frontend/public/images/jewelry.jpg"
+    },
+    {
+      "asset": "frontend/public/images/charm.jpg"
+    },
+    {
+      "asset": "frontend/public/images/bag-noir.jpg"
+    },
+    {
+      "asset": "frontend/public/images/necklace.jpg"
+    },
+    {
+      "asset": "frontend/public/images/charm-green.jpg"
+    }
+  ]
+}

@@ -1,0 +1,10 @@
+{
+  "name": "suxu-workspace",
+  "private": true,
+  "scripts": {
+    "start": "./start.sh",
+    "serve": "./start.sh",
+    "build": "mkdir -p .runtime && npm --prefix frontend run typecheck && npm --prefix frontend run build && npm --prefix quick-frontend run typecheck && npm --prefix quick-frontend run build && npm --prefix admin run build && cd backend && go build -o ../.runtime/suxu-api .",
+    "test": "cd backend && go test ./..."
+  }
+}

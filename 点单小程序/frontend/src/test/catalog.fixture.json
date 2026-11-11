@@ -1,0 +1,148 @@
+{
+  "products": [
+    {
+      "name": "云游 · 弧形帆布包",
+      "english": "THE EVERYDAY TOTE",
+      "description": "柔软有形，装下自在日常。",
+      "category": "布包",
+      "price": 26800,
+      "image": "/images/bag.jpg",
+      "available": true,
+      "stock": 18,
+      "material": "棉质帆布 · 拼接提手",
+      "details": "弧形廓形与自然织纹，轻盈地融入每一次出行。建议局部轻柔清洁，避免长时间浸泡及暴晒。",
+      "id": "p1",
+      "options": [
+        "标准款"
+      ],
+      "colors": [
+        "奶油白",
+        "燕麦色"
+      ]
+    },
+    {
+      "name": "初光 · 经典莫桑钻戒",
+      "english": "THE FIRST LIGHT",
+      "description": "将一束光，留在指间。",
+      "category": "莫桑钻戒",
+      "price": 69900,
+      "image": "/images/ring.jpg",
+      "available": true,
+      "stock": 12,
+      "material": "莫桑石 · 银色戒托（演示配置）",
+      "details": "以六爪轮廓衬托通透主石，在细微转动间映出光芒。莫桑石并非天然钻石。实际主石参数、戒托材质及证书请向商家确认。建议到店试戴，确认戒围后选购。",
+      "id": "p2",
+      "options": [
+        "港码 10",
+        "港码 12",
+        "港码 14",
+        "港码 16"
+      ],
+      "colors": [
+        "银白色"
+      ]
+    },
+    {
+      "name": "流形 · 水滴耳饰",
+      "english": "THE FLUID FORM",
+      "description": "温柔的弧度，不必刻意的光。",
+      "category": "首饰",
+      "price": 16900,
+      "image": "/images/jewelry.jpg",
+      "available": true,
+      "stock": 20,
+      "material": "金色镀层金属（演示配置）",
+      "details": "以水滴为灵感，柔和的体积感点亮耳畔。避免接触香水与清洁剂，佩戴后用干软布擦拭并独立收纳。实际材质与敏感肌适配性请到店确认。",
+      "id": "p3",
+      "options": [
+        "一对装"
+      ],
+      "colors": [
+        "香槟金"
+      ]
+    },
+    {
+      "name": "花信 · 山茶花挂件",
+      "english": "A LITTLE BLOOM",
+      "description": "让一朵花，陪你去往日常。",
+      "category": "挂件",
+      "price": 7900,
+      "image": "/images/charm.jpg",
+      "available": true,
+      "stock": 25,
+      "material": "棉质织物 · 金属扣环",
+      "details": "层叠花瓣搭配柔软棉绳，为包袋增添一处细节。可拆卸扣环便于搭配。织物避免接触尖锐物，局部轻柔清洁后自然晾干。",
+      "id": "p4",
+      "options": [
+        "单件"
+      ],
+      "colors": [
+        "象牙白"
+      ]
+    },
+    {
+      "name": "夜行 · 轻量腋下包",
+      "english": "AFTER HOURS",
+      "description": "一抹墨黑，恰好的分寸。",
+      "category": "布包",
+      "price": 23900,
+      "image": "/images/bag-noir.jpg",
+      "available": true,
+      "stock": 10,
+      "material": "黑色帆布 · 金属配件",
+      "details": "随性的月牙轮廓与柔软帆布，陪伴通勤与周末。建议干燥存放，局部清洁，避免长时间摩擦浅色衣物。",
+      "id": "p5",
+      "options": [
+        "标准款"
+      ],
+      "colors": [
+        "墨黑"
+      ]
+    },
+    {
+      "name": "回声 · 金色吊坠项链",
+      "english": "A QUIET ECHO",
+      "description": "贴近心口的一点光。",
+      "category": "首饰",
+      "price": 19900,
+      "image": "/images/necklace.jpg",
+      "available": true,
+      "stock": 15,
+      "material": "金色镀层金属（演示配置）",
+      "details": "纤细链条与不规则圆润吊坠，以克制的线条陪伴每一次搭配。避免沐浴时佩戴，与其他饰品分开保存。实际链长与材质请向商家确认。",
+      "id": "p6",
+      "options": [
+        "标准款"
+      ],
+      "colors": [
+        "香槟金"
+      ]
+    },
+    {
+      "name": "青结 · 手绳包挂",
+      "english": "THE LITTLE KNOT",
+      "description": "把好心情，系在身边。",
+      "category": "挂件",
+      "price": 5900,
+      "image": "/images/charm-green.jpg",
+      "available": true,
+      "stock": 30,
+      "material": "编织棉绳 · 装饰珠 · 金属扣",
+      "details": "一枚小巧的编织包挂，为日常包袋添上一抹青绿。装饰珠并非宝石材质承诺，请以到店实物为准。避免长时间浸水。",
+      "id": "p7",
+      "options": [
+        "单件"
+      ],
+      "colors": [
+        "苔绿"
+      ]
+    }
+  ],
+  "settings": {
+    "name": "素序 SUXU",
+    "announcement": "将日常，交给心动。",
+    "location": "素序生活选物 · 线下自提点",
+    "hours": "11:00 — 21:00",
+    "open": true
+  }
+}

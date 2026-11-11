@@ -1,0 +1,49 @@
+{
+  "result": "PASS",
+  "nginx": "1.26.3",
+  "single_local_test_port": 18080,
+  "production_port": 80,
+  "static_assets_verified": 30,
+  "checks": [
+    {
+      "path": "/",
+      "status": 200,
+      "content": "customer"
+    },
+    {
+      "path": "/admin/",
+      "status": 200,
+      "content": "merchant"
+    },
+    {
+      "path": "/admin/login",
+      "status": 200,
+      "content": "merchant"
+    },
+    {
+      "path": "/admin/orders",
+      "status": 200,
+      "content": "merchant"
+    },
+    {
+      "path": "/admin/products",
+      "status": 200,
+      "content": "merchant"
+    },
+    {
+      "path": "/admin/index.html",
+      "status": 200,
+      "content": "merchant"
+    },
+    {
+      "path": "/admin",
+      "redirect_to": "/admin/"
+    },
+    {
+      "path": "/api/v1/catalog?port80=1",
+      "status": 200,
+      "full_path_and_host_preserved": true,
+      "upstream": "temporary response stub; no database"
+    }
+  ]
+}

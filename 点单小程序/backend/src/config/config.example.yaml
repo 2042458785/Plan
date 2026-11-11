@@ -1,0 +1,47 @@
+# 复制为 config.yaml，再填写部署环境的连接信息和密钥。
+server:
+  host: "127.0.0.1"
+  port: "8090"
+  mode: "debug"
+  timeout: 15
+  allow_origin: ""
+  allow_origins: []
+  allow_methods: "GET,POST,PUT,PATCH,DELETE,OPTIONS"
+  allow_headers: "Content-Type,Authorization,X-Order-Token"
+  cors_max_age: 600
+logger:
+  MaxSize: 20
+  MaxBackups: 5
+  MaxAge: 7
+mysql:
+  host: "127.0.0.1"
+  port: "3306"
+  user: "suxu"
+  password: ""
+  dbname: "suxu_development"
+  charset: "utf8mb4"
+  max_idle: 5
+  max_open: 20
+  auto_create_database: true
+redis:
+  enable: false
+  host: "127.0.0.1"
+  port: "6379"
+  password: ""
+  db: 0
+jwt:
+  secret: ""
+  expire: 12
+  issuer: "suxu-merchant"
+  whitelist:
+    - "/api/v1/catalog"
+    - "/api/v1/orders"
+    - "/api/v1/admin/login"
+bootstrap:
+  admin_username: "admin"
+  admin_password: ""
+  seed_catalog: false
+rate_limit:
+  enable: true
+  rate: 10
+  capacity: 30

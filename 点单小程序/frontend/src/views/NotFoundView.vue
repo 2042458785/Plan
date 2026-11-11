@@ -1,0 +1,1 @@
+<template><main style="min-height:100vh;display:grid;place-content:center;text-align:center;background:#fffefa;color:#6c614c"><h1>页面未找到</h1><router-link to="/" style="margin-top:24px">返回素序首页 →</router-link></main></template>

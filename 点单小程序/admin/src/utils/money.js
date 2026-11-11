@@ -1,0 +1,2 @@
+export function money(cents){const value=Number(cents);if(!Number.isSafeInteger(value))return '—';const sign=value<0?'-':'';const n=Math.abs(value);return `${sign}${Math.floor(n/100)}.${String(n%100).padStart(2,'0')}`}
+export function parseYuan(value){const s=String(value).trim();if(!/^\d+(\.\d{1,2})?$/.test(s))throw Error('价格最多填写两位小数');const [whole,fraction='']=s.split('.');const n=Number(whole)*100+Number(fraction.padEnd(2,'0'));if(!Number.isSafeInteger(n)||n<1||n>1000000)throw Error('价格应在0.01至10000元之间');return n}

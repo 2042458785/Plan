@@ -1,0 +1,63 @@
+{
+  "date": "2026-11-03",
+  "timezone": "Asia/Shanghai",
+  "result": "PASS",
+  "environment": {
+    "mysql": "9.3.0",
+    "host": "127.0.0.1",
+    "temporary_port": 13306,
+    "temporary_database": "suxu_acceptance",
+    "storage": "real MySQL/InnoDB; no mock or SQLite"
+  },
+  "integration": {
+    "command": "RUN_MYSQL_TESTS=1 SUXU_TEST_CONFIG=<isolated YAML> go test -race -v -timeout 180s ./test/...",
+    "result": "PASS",
+    "elapsed_seconds": 14.167,
+    "subtests": [
+      "BusinessTablesAndSKUSeed",
+      "LifecycleAuthorizationAndRevocation",
+      "MerchantCatalogSettingsAndDatabaseQueries",
+      "LegacyImportAtomicityAndRepeatProtection",
+      "ForgeryExpiryRoleAndRateLimit",
+      "ConcurrentInventoryAndIdempotency",
+      "RollbackCancellationAndStaleEdits"
+    ]
+  },
+  "browser": {
+    "result": "PASS",
+    "product": "p2",
+    "variant": "港码 12",
+    "color": "银白色",
+    "quantity": 1,
+    "total_cents": 69900,
+    "state_after_merchant_update": "ready",
+    "state_after_backend_restart": "ready",
+    "merchant_session_after_backend_restart": "valid",
+    "merchant_logout": "returned to login"
+  },
+  "sql_checks_before_cleanup": {
+    "business_table_count": 12,
+    "order_version": 3,
+    "ring_size_12_remaining_stock": 2,
+    "other_ring_sizes_remaining_stock": 3,
+    "unexpected_test_databases": 0
+  },
+  "fixes": [
+    "Seed category lookup now uses name only; position is a creation attribute.",
+    "Integration assertions reset GORM destination primary keys before querying another SKU."
+  ],
+  "cleanup": {
+    "remaining_test_databases": 0,
+    "temporary_mysql_stopped": true,
+    "temporary_backend_stopped": true,
+    "temporary_directory_deleted": true,
+    "temporary_socket_deleted": true,
+    "existing_mysql_3306_still_running": true,
+    "private_config_modified": false
+  },
+  "boundaries": [
+    "Only this local MySQL 9.3.0 environment was validated.",
+    "No production database was connected or configured.",
+    "Redis remains disabled; enabled Redis integration is outside this result."
+  ]
+}
