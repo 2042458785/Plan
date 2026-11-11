@@ -1,0 +1,10 @@
+[project]
+name = "polymarket-taker-adapter"
+version = "0.1.0"
+requires-python = ">=3.10"
+dependencies = [
+  "polymarket-paper-trader==0.4.13",
+  "mcp==2.3.0",
+  "httpx==0.28.1",
+  "websockets==15.0.1",
+]
