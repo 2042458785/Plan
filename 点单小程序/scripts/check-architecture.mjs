@@ -17,7 +17,7 @@ assert.ok(!fs.existsSync(path.join(project,'frontend/src/Admin.vue')))
 for(const file of ['frontend/src/config.ts','frontend/src/router/index.ts','frontend/src/store/index.ts','frontend/src/utils/request.ts','admin/src/config.js','admin/src/router/index.js','admin/src/store/index.js','admin/src/utils/request.js','backend/src/config/config.example.yaml','backend/src/app/app.go','backend/src/dao/order_dao.go','backend/src/api/http_controller/order_controller.go'])assert.ok(fs.existsSync(path.join(project,file)),`缺少架构文件 ${file}`)
 const marker=['商家入口','merchant-token','/admin/login','/api/v1/admin','MERCHANT ATELIER','suxu:unauthorized']
 function walk(directory){return fs.readdirSync(directory,{withFileTypes:true}).flatMap(entry=>entry.isDirectory()?walk(path.join(directory,entry.name)):[path.join(directory,entry.name)])}
-const bundleFiles=['frontend/quick','quick-frontend/quick'].flatMap(directory=>{
+const bundleFiles=['frontend/dist','quick-frontend/quick'].flatMap(directory=>{
   assert.ok(fs.existsSync(path.join(project,directory,'index.html')),`缺少独立产物 ${directory}/index.html`)
   return walk(path.join(project,directory)).filter(file=>/\.(js|html|css)$/.test(file))
 })

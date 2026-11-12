@@ -171,8 +171,8 @@ node scripts/check-architecture.mjs
 ## 独立部署
 
 - 80 端口下的入口为完整商城 `/`、快速前台 `/quick/`、管理端 `/admin/login` 和接口 `/api/v1/...`。
-- 完整 Nginx 配置：[docs/nginx.ip.conf](docs/nginx.ip.conf)，在一个server块内按路径分流；替换服务器 `/etc/nginx/nginx.conf`。
-- 顾客构建产物：`frontend/quick/`，上传目录内容至 `/usr/share/nginx/html/dist/`。
+- 完整 Nginx 配置使用四个 `server` 块。公网 80 端口按路径转发到本机服务。[Nginx 配置](docs/nginx.ip.conf)
+- 顾客构建产物：`frontend/dist/`，上传目录内容至 `/usr/share/nginx/html/dist/`。
 - 快速前台构建产物：`quick-frontend/quick/`，上传目录内容至 `/usr/share/nginx/html/quick/`。
 - 商家构建产物：`admin/dist_end/`，上传目录内容至 `/usr/share/nginx/html/dist_end/`。
 - Go 后端只提供 API，默认不提供任何前端页面。

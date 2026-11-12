@@ -39,7 +39,7 @@ npm --prefix admin run build
 
 新版顾客账号通过 HTTPS 使用。若在 Nginx 配置 HTTPS 入口，需要在该入口设置 `X-Forwarded-Proto $scheme`，并继续代理 `/api/`。原 HTTP 入口仍支持普通预约。
 
-各项目可单独构建及上传。分别将 `frontend/quick/`、`quick-frontend/quick/`、`admin/dist_end/` 的内容放入上表对应目录。开发端口分别是 8081、8083、8082。
+各项目可单独构建及上传。分别将 `frontend/dist/`、`quick-frontend/quick/`、`admin/dist_end/` 的内容放入上表对应目录。开发端口分别是 8081、8083、8082。
 
 ## 检查
 
