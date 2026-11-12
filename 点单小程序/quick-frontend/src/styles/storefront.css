@@ -18,6 +18,7 @@
 .navigation-links .s-quick-link { display: block; padding: 21px 0; border-bottom: 1px solid var(--line); font: 21px 'Songti SC', serif; letter-spacing: 2px; }
 
 /* 购物袋与预约 */
+.s-sheet { min-width: 0; overflow-x: hidden; }
 .s-sheet .sheet-heading h2:focus { outline: none; }
 .checkout-back { display: inline-flex; padding: 8px 0; min-height: 40px; color: #625333; text-align: left; }
 .checkout-information > .checkout-back { margin-bottom: 10px; }
@@ -41,3 +42,17 @@
 .legacy-saved small { display: block; color: #6f5b3a; margin-top: 4px; }
 .customer-order-heading { flex-wrap: wrap; gap: 5px; }
 .customer-order-heading b { flex-shrink: 0; }
+.reservation-id { min-width: 0; padding-inline: 12px; }
+.reservation-id > strong {
+  font-family: ui-monospace, SFMono-Regular, monospace; font-size: clamp(14px, 4.15vw, 23px);
+  font-weight: 500; line-height: 1.45; letter-spacing: .015em; white-space: normal; overflow-wrap: anywhere;
+  user-select: all; -webkit-user-select: all;
+}
+.pickup-info > div, .success-items h3, .success-items p, .reservation-note { min-width: 0; overflow-wrap: anywhere; }
+
+@media (max-width: 720px) {
+  .checkout-fields { grid-template-columns: minmax(0, 1fr); gap: 0; }
+  .checkout-information input:not([type="radio"]), .checkout-information select, .checkout-information textarea, .s-search-form input { font-size: 16px; min-height: 44px; }
+  .checkout-information input::placeholder, .checkout-information textarea::placeholder { font-size: 14px; }
+  .bag-checkout.is-checkout { position: static; margin-bottom: 0; box-shadow: none; }
+}

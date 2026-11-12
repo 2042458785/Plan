@@ -11,11 +11,11 @@ const category=ref('全部商品'),sort=ref('curated'),search=ref(''),view=ref('
 const selectedId = ref('')
 const selected = computed(() => products.value.find(product => product.id === selectedId.value) ?? null)
 const cart=computed<BagLine[]>({get:()=>store.state.bag.items,set:v=>store.commit('bag/setItems',v)}),favorites=computed<string[]>({get:()=>store.state.wishlist.ids,set:v=>store.commit('wishlist/setIds',v)}),history=ref(load('suxu-orders-v1',[])),historyData=ref([]),current=ref(null)
-const customer=ref(''),contact=ref(''),note=ref(''),pickup=ref('营业时间内自提'),busy=ref(false),consent=ref(false),service=ref('about')
+const customer=ref(''),contact=ref(''),note=ref(''),pickup=ref('今日营业时间内自提'),busy=ref(false),consent=ref(false),service=ref('about')
 const fulfillment = ref<'pickup' | 'delivery'>('pickup'), address = ref(''), deliveryRate = ref(200)
 const serviceReturn=ref('');const collection=ref<HTMLElement|null>(null),searchInput=ref<HTMLInputElement|null>(null),sheet=ref<HTMLElement|null>(null)
 const checkout = ref(false)
-const pickupOptions = ['营业时间内自提', '今天自提，请商家确认', '明天自提，请商家确认', '与主理人另约时间']
+const pickupOptions = ['今日营业时间内自提', '明日喜提', '和店家商量时间']
 let interval,toastTimer;let focusBefore:HTMLElement|null=null
 function load(k,d){try{return JSON.parse(localStorage.getItem(k))??d}catch{return d}}
 function persist(k,v){try{k==='suxu-bag-v1'?store.commit('bag/setItems',JSON.parse(JSON.stringify(v))):k==='suxu-favorites-v1'?store.commit('wishlist/setIds',[...v]):localStorage.setItem(k,JSON.stringify(v))}catch{notify('浏览器存储不可用，请保留本次订单页面')}}
@@ -147,12 +147,13 @@ async function submit() {
   const delivering = fulfillment.value === 'delivery'
   if (!contact.value.trim()) { notify('请填写手机号或微信号'); return }
   if (delivering && !address.value.trim()) {
-    notify('请填写配送地址')
+    notify('请填写寝室楼栋和寝室号')
     return
   }
   if (!consent.value) { notify('请确认取货和付款方式'); return }
 
   busy.value = true
+  ;(document.activeElement as HTMLElement | null)?.blur()
   const payload = {
     items: lines.value.map(({ productId, quantity, variant, color }) => ({ productId, quantity, variant, color })),
     customer: customer.value,
