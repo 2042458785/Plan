@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import Icon from '@/components/Icon.vue'
-import { assetUrl, storefrontURL } from '@/config'
+import { assetUrl } from '@/config'
 import type { Product, ShopSetting } from '@/types/catalog'
 
 defineProps<{
@@ -20,7 +20,7 @@ const emit = defineEmits<{
 }>()
 
 const catalog = ref<HTMLElement | null>(null)
-const defaultCover = assetUrl('/images/hero.jpg')
+const defaultCover = assetUrl('/images/quick-cover.jpg')
 function restoreCover(event: Event) {
   const image = event.currentTarget as HTMLImageElement
   if (image.getAttribute('src') !== defaultCover) image.src = defaultCover
@@ -43,11 +43,10 @@ function selectCategory(name: string) {
   <div class="quick-shop">
     <header class="quick-header">
       <a class="quick-brand" :href="quickHome" aria-label="快速小程序首页">
-        <span class="quick-monogram">S</span>
-        <span>{{ settings.name }}<small>快速小程序</small></span>
+        <span class="quick-monogram" aria-hidden="true">S</span>
+        <h1 class="quick-wordmark">{{ settings.name }}<small>快速小程序</small></h1>
       </a>
       <div class="quick-actions">
-        <a :href="storefrontURL" class="quick-full-shop">完整商城 <Icon name="arrow" :size="13" /></a>
         <button type="button" aria-label="我的账号与预约" @click="emit('openOrders')">
           <Icon name="user" :size="20" />
         </button>
@@ -59,19 +58,10 @@ function selectCategory(name: string) {
     </header>
 
     <main class="quick-main">
-      <section class="quick-cover" aria-labelledby="quick-title">
-        <img :src="assetUrl(settings.quickCover || '/images/hero.jpg')" alt="" fetchpriority="high" @error="restoreCover" />
-        <div class="quick-cover-shade"></div>
-        <div class="quick-cover-copy">
-          <span class="quick-kicker">SUXU / THE QUICK EDIT</span>
-          <h1 id="quick-title">快速小程序</h1>
-          <p>随手挑选，留一件心动。</p>
-          <button type="button" class="quick-explore" @click="scrollToCatalog">
-            开始选购 <Icon name="arrow" :size="16" />
-          </button>
-        </div>
-        <span class="quick-cover-mark" aria-hidden="true">SUXU · 生活选物</span>
-      </section>
+      <div class="quick-cover">
+        <img :src="settings.quickCover ? assetUrl(settings.quickCover) : defaultCover"
+          alt="" fetchpriority="high" @error="restoreCover" />
+      </div>
 
       <div class="quick-notice">
         <span class="quick-shop-state" :class="{ open: settings.open }">
@@ -172,18 +162,27 @@ function selectCategory(name: string) {
 
 .quick-brand,
 .quick-actions,
-.quick-full-shop,
 .quick-notice,
 .quick-shop-state,
-.quick-explore,
 .quick-footer > span {
   display: flex;
   align-items: center;
 }
 
-.quick-brand { gap: 11px; min-width: 0; font-weight: 600; }
-.quick-brand > span:last-child { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.quick-brand small { display: block; margin-top: 2px; color: var(--quick-muted); font-size: 11px; font-weight: 400; }
+.quick-brand { gap: 11px; min-width: 0; }
+.quick-wordmark {
+  margin: 0;
+  font: 600 17px/1.25 var(--quick-serif);
+  letter-spacing: .035em;
+  overflow-wrap: anywhere;
+}
+.quick-wordmark small {
+  display: block;
+  margin-top: 3px;
+  color: var(--quick-muted);
+  font: 400 11px/1.25 system-ui, sans-serif;
+  letter-spacing: .1em;
+}
 .quick-monogram {
   display: grid;
   place-items: center;
@@ -196,31 +195,18 @@ function selectCategory(name: string) {
 
 .quick-actions { flex-shrink: 0; gap: 6px; }
 .quick-actions button { position: relative; display: grid; place-items: center; width: 44px; height: 44px; color: inherit; }
-.quick-full-shop { gap: 6px; padding: 12px 6px; font-size: 12px; }
 .quick-bag-count { position: absolute; top: 1px; right: 0; min-width: 18px; padding: 2px 4px; border-radius: 16px; background: #424636; color: #fff; font-size: 10px; }
 .quick-main { max-width: 1160px; margin: auto; padding: 24px 20px 52px; }
 
 .quick-cover {
   position: relative;
-  isolation: isolate;
-  display: flex;
-  align-items: center;
-  min-height: clamp(280px, 35vw, 380px);
+  height: clamp(240px, 49vw, 540px);
   overflow: hidden;
-  background: #77654f;
-  color: #fffaf0;
+  border-radius: 18px;
+  background: #ebe2d4;
 }
-
-.quick-cover > img,
-.quick-cover-shade { position: absolute; inset: 0; width: 100%; height: 100%; }
-.quick-cover > img { z-index: -2; object-fit: cover; object-position: 50% 50%; animation: quick-drift 4.8s ease-out both; }
-.quick-cover-shade { z-index: -1; background: linear-gradient(92deg, #2b281fec, #3d34256b 54%, #241f1412 100%); }
-.quick-cover-copy { padding: 32px clamp(27px, 6vw, 75px); animation: quick-reveal .7s ease-out both; }
+.quick-cover > img { display: block; width: 100%; height: 100%; object-fit: cover; animation: quick-drift 3.2s ease-out both; }
 .quick-kicker { display: block; font-size: 10px; font-weight: 600; letter-spacing: .17em; }
-.quick-cover h1 { margin: 12px 0 10px; font: 400 clamp(32px, 5vw, 56px)/1.18 var(--quick-serif); letter-spacing: .07em; }
-.quick-cover-copy p { font-size: 14px; letter-spacing: .07em; }
-.quick-explore { gap: 15px; min-height: 43px; margin-top: 23px; padding: 0 15px; background: #f9f3e7; color: #403a2d; font-size: 12px; }
-.quick-cover-mark { position: absolute; right: 24px; bottom: 20px; font-size: 10px; letter-spacing: .2em; }
 
 .quick-notice { gap: 12px; padding: 15px 0; border-bottom: 1px solid var(--quick-line); color: var(--quick-muted); font-size: 12px; }
 .quick-shop-state { gap: 7px; flex-shrink: 0; font-weight: 600; }
@@ -256,8 +242,8 @@ function selectCategory(name: string) {
 .quick-footer-mark { margin-left: auto; letter-spacing: .12em; }
 
 @keyframes quick-drift {
-  from { transform: scale(1.01) translateX(0); }
-  to { transform: scale(1.085) translateX(-1%); }
+  from { transform: scale(1.025); }
+  to { transform: scale(1); }
 }
 
 @keyframes quick-reveal {
@@ -272,16 +258,13 @@ function selectCategory(name: string) {
 
 @media (max-width: 560px) {
   .quick-header { min-height: 62px; padding: 6px 10px; }
-  .quick-brand { gap: 7px; font-size: 13px; }
+  .quick-brand { gap: 9px; }
+  .quick-wordmark { font-size: 16px; }
   .quick-monogram { flex-basis: 32px; height: 32px; font-size: 21px; }
   .quick-actions { gap: 0; }
-  .quick-full-shop { font-size: 11px; }
-  .quick-full-shop svg { display: none; }
   .quick-main { padding: 10px 10px 32px; }
-  .quick-cover { min-height: 250px; }
-  .quick-cover > img { object-position: 57% center; }
-  .quick-cover-shade { background: linear-gradient(94deg, #2b281fd9, #3d342554 78%); }
-  .quick-cover-mark { right: 11px; bottom: 12px; }
+  .quick-cover { height: auto; aspect-ratio: 1.54; border-radius: 13px; }
+  .quick-cover > img { position: absolute; inset: 0; }
   .quick-catalog { grid-template-columns: 85px minmax(0, 1fr); gap: 10px; margin-top: 15px; scroll-margin-top: 72px; }
   .quick-sidebar { top: 72px; max-height: calc(100vh - 78px); }
   .quick-side-label { padding-left: 7px; }
@@ -297,7 +280,7 @@ function selectCategory(name: string) {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .quick-cover > img, .quick-cover-copy, .quick-grid { animation: none; }
+  .quick-cover > img, .quick-grid { animation: none; }
   .quick-product-photo img { transition: none; }
 }
 .quick-catalog.quick-catalog-empty { grid-template-columns: minmax(0, 1fr); }

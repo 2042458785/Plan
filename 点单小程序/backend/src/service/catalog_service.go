@@ -22,10 +22,11 @@ func (s *CatalogService) SaveProduct(ctx context.Context, id string, p m.Product
 	if p.Name == "" || len(p.Name) > 100 || (p.CategoryID == 0 && p.Category == "") || len(p.Category) > 240 || p.Price < 1 || p.Price > 1000000 || len(p.Description) > 500 || len(p.Material) > 300 || len(p.Details) > 3000 || (p.Care != nil && len(*p.Care) > 3000) || len(p.English) > 200 || len(p.Image) > 1000 || len(p.SKUs) < 1 || len(p.SKUs) > 120 {
 		return m.ProductView{}, api.Problem(400, "请检查名称、分类、价格、规格和描述长度")
 	}
-	if !validCatalogImage(p.Image) {
+	if p.Gallery == nil && !validCatalogImage(p.Image) {
 		return m.ProductView{}, api.Problem(400, "请上传图片，或填写站内图片路径及 HTTPS 图片地址")
 	}
 	keys := map[string]bool{}
+	colors := map[string]bool{}
 	for i, sku := range p.SKUs {
 		sku.Variant = strings.TrimSpace(sku.Variant)
 		sku.Color = strings.TrimSpace(sku.Color)
@@ -35,6 +36,15 @@ func (s *CatalogService) SaveProduct(ctx context.Context, id string, p m.Product
 			return m.ProductView{}, api.Problem(400, "规格、颜色或库存无效，不能出现重复规格")
 		}
 		keys[key] = true
+		colors[sku.Color] = true
+	}
+	if !validPhotoGroup(p.Gallery) {
+		return m.ProductView{}, api.Problem(400, "商品相册最多 8 张，图片地址须有效且不重复")
+	}
+	for color, images := range p.ColorImages {
+		if !colors[color] || !validPhotoGroup(images) {
+			return m.ProductView{}, api.Problem(400, "颜色须与规格一致，每种颜色最多 8 张不同的图片")
+		}
 	}
 	return s.Dao.SaveProduct(ctx, id, p, adminID)
 }
@@ -63,6 +73,20 @@ func (s *CatalogService) SaveCategory(ctx context.Context, id uint, name string,
 
 func (s *CatalogService) DeleteCategory(ctx context.Context, id, adminID uint) error {
 	return s.Dao.DeleteCategory(ctx, id, adminID)
+}
+
+func validPhotoGroup(images []string) bool {
+	if len(images) > 8 {
+		return false
+	}
+	seen := make(map[string]bool, len(images))
+	for _, image := range images {
+		if len(image) > 1000 || !validCatalogImage(image) || seen[image] {
+			return false
+		}
+		seen[image] = true
+	}
+	return true
 }
 
 func validCatalogImage(path string) bool {

@@ -40,7 +40,7 @@ describe('顾客端行为与隔离',()=>{
    await button('港码 14').trigger('click')
    await button('立即购买').trigger('click')
    await wrapper.get('input[autocomplete="name"]').setValue('组件验收')
-   await wrapper.get('input[placeholder="手机号或微信号"]').setValue('fixture-contact')
+   await wrapper.get('input[name="wechat"]').setValue('fixture-contact')
    await wrapper.get('.consent-checkbox input').setValue(true)
    await button('提交预约').trigger('click')
    await flushPromises()
@@ -65,7 +65,13 @@ describe('顾客端行为与隔离',()=>{
    await wrapper.get(`button[aria-label="管理购物袋中的${product.name}"]`).trigger('click')
    expect(store.state.bag.items).toEqual([])
  })
- it('选购指南返回后保留已选戒围',async()=>{await render();await wrapper.get('button[aria-label="查看初光 · 经典莫桑钻戒"]').trigger('click');await button('港码 16').trigger('click');await button('选购指南').trigger('click');expect(wrapper.text()).toContain('适合，才是恰好的美。');await button('回到我的心选').trigger('click');expect(button('港码 16').attributes('aria-pressed')).toBe('true')})
+ it('商品详情直接显示可选规格',async()=>{
+  await render()
+  await wrapper.get('button[aria-label="查看初光 · 经典莫桑钻戒"]').trigger('click')
+  expect(wrapper.text()).not.toContain('选购指南')
+  await button('港码 16').trigger('click')
+  expect(button('港码 16').attributes('aria-pressed')).toBe('true')
+ })
 })
 
 describe('目录同步', () => {
@@ -89,7 +95,7 @@ describe('目录同步', () => {
   })
 })
 
-it('送货上门需要地址及联系方式，整单加 2 元', async () => {
+it('送货上门需要微信号和地址，整单加 2 元', async () => {
   await render()
   await wrapper.get('button[aria-label="查看初光 · 经典莫桑钻戒"]').trigger('click')
   await button('港码 14').trigger('click')
@@ -101,12 +107,16 @@ it('送货上门需要地址及联系方式，整单加 2 元', async () => {
   await wrapper.get('.consent-checkbox input').setValue(true)
   await button('提交预约').trigger('click')
   expect(api.mock.calls.some(c => c[0] === '/orders')).toBe(false)
-  await wrapper.get('input[placeholder="手机号或微信号"]').setValue('test_wechat_01')
   await wrapper.get('input[autocomplete="street-address"]').setValue('配送测试地址')
+  await wrapper.get('input[name="wechat"]').setValue('13800138000')
+  await button('提交预约').trigger('click')
+  expect(api.mock.calls.some(c => c[0] === '/orders')).toBe(false)
+  expect(wrapper.text()).toContain('请留意并通过商家的微信好友申请')
+  await wrapper.get('input[name="wechat"]').setValue('test_wechat_01')
   await button('提交预约').trigger('click')
   await flushPromises()
   const request = api.mock.calls.find(c => c[0] === '/orders')!
-  expect(JSON.parse(request[1].body)).toMatchObject({fulfillment:'delivery', address:'配送测试地址', pickup:''})
+  expect(JSON.parse(request[1].body)).toMatchObject({fulfillment:'delivery', address:'配送测试地址', pickup:'', wechat:'test_wechat_01'})
   expect(wrapper.get('.pickup-info').text()).toContain('配送测试地址')
 })
 
@@ -133,7 +143,7 @@ it('仅结算勾选的行，未选和缺货商品继续留在购物袋', async (
   await button('继续填写预约').trigger('click')
   expect(wrapper.findAll('.checkout-summary li')).toHaveLength(1)
   await wrapper.get('input[autocomplete="name"]').setValue('组件验收')
-  await wrapper.get('input[placeholder="手机号或微信号"]').setValue('fixture-contact')
+  await wrapper.get('input[name="wechat"]').setValue('fixture-contact')
   await wrapper.get('.pickup-options input[value="明日营业时间内自提"]').setValue(true)
   await wrapper.get('.consent-checkbox input').setValue(true)
   await button('提交预约').trigger('click')
@@ -174,7 +184,7 @@ it('提交失败保留商品及勾选，同一份预约可用原请求键重试'
   await wrapper.get('.s-bag-line input[type="checkbox"]').setValue(true)
   await button('继续填写预约').trigger('click')
   await wrapper.get('input[autocomplete="name"]').setValue('组件验收')
-  await wrapper.get('input[placeholder="手机号或微信号"]').setValue('fixture-contact')
+  await wrapper.get('input[name="wechat"]').setValue('fixture-contact')
   await wrapper.get('.consent-checkbox input').setValue(true)
   await button('提交预约').trigger('click')
   await flushPromises()
@@ -259,7 +269,7 @@ it('改价冲突后显示新金额，需重新确认并复用预约请求键', a
   await button('港码 12').trigger('click')
   await button('立即购买').trigger('click')
   await wrapper.get('input[autocomplete="name"]').setValue('组件验收')
-  await wrapper.get('input[placeholder="手机号或微信号"]').setValue('fixture-contact')
+  await wrapper.get('input[name="wechat"]').setValue('fixture-contact')
   await wrapper.get('.consent-checkbox input').setValue(true)
   await button('提交预约').trigger('click')
   await flushPromises()
@@ -310,7 +320,7 @@ it('最后一件已售出且原响应丢失时，仍可取回原预约并保留�
   await wrapper.findAll('.s-bag-line input[type="checkbox"]')[0].setValue(true)
   await button('继续填写预约').trigger('click')
   await wrapper.get('input[autocomplete="name"]').setValue('组件验收')
-  await wrapper.get('input[placeholder="手机号或微信号"]').setValue('fixture-contact')
+  await wrapper.get('input[name="wechat"]').setValue('fixture-contact')
   await wrapper.get('.consent-checkbox input').setValue(true)
   await button('提交预约').trigger('click')
   await flushPromises()
@@ -320,4 +330,40 @@ it('最后一件已售出且原响应丢失时，仍可取回原预约并保留�
   await flushPromises()
   expect(wrapper.get('.reservation-id strong').text()).toBe('SU-TEST-001')
   expect(store.state.bag.items).toEqual([unselected])
+})
+
+it('在相册和颜色图之间切换，购物袋和预约采用所选颜色首图', async () => {
+  const catalog = makeCatalog()
+  const product = catalog.products[1]
+  const color = '玫瑰金'
+  product.gallery = ['/api/v1/media/shared-front', '/api/v1/media/shared-detail']
+  product.colors = [...product.colors, color]
+  product.colorImages = { [color]: ['/api/v1/media/rose-front', '/api/v1/media/rose-detail'] }
+  product.skus.push({ ...product.skus.find(sku => sku.variant === '港码 12'), id: 999, color })
+  api.mockResolvedValueOnce(catalog)
+  await render()
+
+  await wrapper.get('button[aria-label="查看初光 · 经典莫桑钻戒"]').trigger('click')
+  const mainImage = () => wrapper.get('.detail-image > img').attributes('src')
+  expect(mainImage()).toBe(product.gallery[0])
+  await wrapper.get('button[aria-label="下一张商品图"]').trigger('click')
+  expect(mainImage()).toBe(product.gallery[1])
+  await wrapper.get('button[aria-label="选择颜色玫瑰金"]').trigger('click')
+  expect(mainImage()).toBe(product.colorImages[color][0])
+  await wrapper.get('button[aria-label="查看商品图 2"]').trigger('click')
+  expect(mainImage()).toBe(product.colorImages[color][1])
+
+  await button('港码 12').trigger('click')
+  await wrapper.get('.detail-title button').trigger('click')
+  await wrapper.get('button[aria-label="关闭窗口"]').trigger('click')
+  await wrapper.get('button[aria-label="打开购物袋"]').trigger('click')
+  expect(wrapper.get('.bag-line-image img').attributes('src')).toBe(product.colorImages[color][0])
+  await wrapper.get('.s-bag-line input[type=checkbox]').setValue(true)
+  await button('继续填写预约').trigger('click')
+  expect(wrapper.get('.checkout-summary img').attributes('src')).toBe(product.colorImages[color][0])
+
+  await wrapper.get('button[aria-label="关闭窗口"]').trigger('click')
+  await wrapper.get('button[aria-label="查看云游 · 弧形帆布包"]').trigger('click')
+  expect(wrapper.get('.detail-image > img').attributes('src')).toContain('/images/')
+  expect(wrapper.find('.gallery-thumbnails').exists()).toBe(false)
 })

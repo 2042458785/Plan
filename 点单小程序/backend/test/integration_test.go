@@ -20,6 +20,7 @@ import (
 	"net/http/httptest"
 	"os"
 	"path/filepath"
+	"slices"
 	"strings"
 	"sync"
 	"testing"
@@ -542,6 +543,40 @@ func TestCatalogAndDeliveryIntegration(t *testing.T) {
 		SKUs: []m.SKUInput{{Variant: "标准款", Color: "原色", Stock: 3}}}
 	var product m.ProductView
 	decode(t, call(f.router, "PUT", admin+"/products/new", productInput, token, ""), &product)
+	productPath := admin + "/products/" + product.ID
+	for _, column := range []string{"gallery", "color_images"} {
+		if err := f.db.Migrator().DropColumn(&m.Product{}, column); err != nil {
+			t.Fatal(err)
+		}
+	}
+	if err := config.Migrate(f.db); err != nil {
+		t.Fatal(err)
+	}
+	decode(t, call(f.router, "GET", public, nil, "", ""), &catalog)
+	if len(catalog.Products) != 1 || catalog.Products[0].Image != image.URL || len(catalog.Products[0].Gallery) != 0 {
+		t.Fatal("迁移旧单图商品后，原图无法继续展示")
+	}
+
+	productInput.Version = product.Version
+	productInput.Gallery = []string{"/images/bag.jpg", image.URL}
+	productInput.ColorImages = map[string][]string{"其他颜色": {"/images/bag-noir.jpg"}}
+	if w := call(f.router, "PUT", productPath, productInput, token, ""); w.Code != 400 {
+		t.Fatal("不存在的颜色被允许保存图片")
+	}
+	productInput.ColorImages = map[string][]string{"原色": {image.URL, "/images/bag-noir.jpg"}}
+	decode(t, call(f.router, "PUT", productPath, productInput, token, ""), &product)
+	if product.Image != productInput.Gallery[0] || !slices.Equal(product.Gallery, productInput.Gallery) || !slices.Equal(product.ColorImages["原色"], productInput.ColorImages["原色"]) {
+		t.Fatalf("多图保存后返回内容不正确: %+v", product)
+	}
+
+	// 旧版后台只发送单图字段时，修改普通商品资料不应清掉已有相册。
+	legacy := productInput
+	legacy.Gallery, legacy.ColorImages = nil, nil
+	legacy.Image, legacy.Version = product.Image, product.Version
+	decode(t, call(f.router, "PUT", productPath, legacy, token, ""), &product)
+	if len(product.Gallery) != 2 || len(product.ColorImages["原色"]) != 2 {
+		t.Fatal("旧版编辑请求清除了相册")
+	}
 	decode(t, call(f.router, "PUT", categoryPath, m.CategoryInput{Name: "帆布包"}, token, ""), &category)
 	decode(t, call(f.router, "GET", public, nil, "", ""), &catalog)
 	if len(catalog.Products) != 1 || catalog.Products[0].CategoryName != "帆布包" || catalog.Products[0].CategoryID != category.ID {
@@ -559,6 +594,25 @@ func TestCatalogAndDeliveryIntegration(t *testing.T) {
 	decode(t, call(f.router, "POST", "/api/v1/orders", orderInput, "", ""), &retry)
 	if order.Total != 5800 || order.DeliveryFee != 200 || order.Fulfillment != "delivery" || order.Address != orderInput.Address || retry.ID != order.ID {
 		t.Fatalf("配送订单金额、地址或幂等不正确: %+v", order.Order)
+	}
+	if len(order.Items) != 1 || order.Items[0].Image != image.URL {
+		t.Fatal("预约没有保留已购颜色的首图")
+	}
+	decode(t, call(f.router, "GET", public, nil, "", ""), &catalog)
+	onlyColor := productInput
+	onlyColor.Gallery = []string{}
+	onlyColor.Image = ""
+	onlyColor.SKUs[0].Stock = 1
+	onlyColor.Version = catalog.Products[0].Version
+	decode(t, call(f.router, "PUT", productPath, onlyColor, token, ""), &product)
+	if product.Image != image.URL || len(product.Gallery) != 0 || len(product.ColorImages["原色"]) != 2 {
+		t.Fatal("仅上传颜色图时没有生成正确的封面")
+	}
+	noImages := onlyColor
+	noImages.ColorImages = map[string][]string{}
+	noImages.Version = product.Version
+	if w := call(f.router, "PUT", productPath, noImages, token, ""); w.Code != 400 {
+		t.Fatal("允许保存无任何图片的商品")
 	}
 	decode(t, call(f.router, "DELETE", categoryPath, nil, token, ""), nil)
 	decode(t, call(f.router, "GET", public, nil, "", ""), &catalog)
@@ -609,7 +663,7 @@ func TestCustomerAccountAndCoverIntegration(t *testing.T) {
 	if restored.Account.ID != first.Account.ID || restored.Token == first.Token {
 		t.Fatal("同一账号登录后顾客编号变化或会话重复")
 	}
-	credentials.Contact = "test_wechat_02"
+	credentials.Contact = "13800138000"
 	decode(t, call(f.router, "POST", base+"/register", credentials, "", ""), &second)
 	var profile m.CustomerAccount
 	decode(t, call(f.router, "PUT", base+"/profile", m.CustomerProfileInput{Name: "更新称呼", Dorm: "3 栋 508"}, restored.Token, ""), &profile)
@@ -632,6 +686,22 @@ func TestCustomerAccountAndCoverIntegration(t *testing.T) {
 		t.Fatal("另一账号能读取订单详情")
 	}
 	decode(t, call(f.router, "GET", base+"/orders/"+order.ID, nil, first.Token, ""), &order)
+
+	newRequest := orderInput("customer-wechat-contact-order")
+	invalidWeChat := "13800138000"
+	newRequest.WeChat = &invalidWeChat
+	if w := call(f.router, "POST", base+"/orders", newRequest, second.Token, ""); w.Code != 400 {
+		t.Fatalf("手机号作为微信号应返回 400，实际为 %d", w.Code)
+	}
+	checkoutWeChat := "  Checkout_WeChat  "
+	newRequest.WeChat = &checkoutWeChat
+	var wechatOrder, retriedOrder m.OrderView
+	decode(t, call(f.router, "POST", base+"/orders", newRequest, second.Token, ""), &wechatOrder)
+	decode(t, call(f.router, "POST", base+"/orders", newRequest, second.Token, ""), &retriedOrder)
+	if wechatOrder.CustomerID != second.Account.ID || wechatOrder.Contact != "Checkout_WeChat" || retriedOrder.ID != wechatOrder.ID {
+		t.Fatal("手机号登录后没有保存预约所填微信号，或重试生成了重复订单")
+	}
+
 	decode(t, call(f.router, "POST", base+"/logout", map[string]any{}, restored.Token, ""), nil)
 	if w := call(f.router, "GET", base+"/profile", nil, restored.Token, ""); w.Code != 401 {
 		t.Fatal("退出登录未撤销会话")

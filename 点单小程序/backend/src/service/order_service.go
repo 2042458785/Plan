@@ -14,6 +14,14 @@ func (s *OrderService) Create(ctx context.Context, in m.CreateOrderInput) (m.Ord
 	in.Customer = strings.TrimSpace(in.Customer)
 	in.Note = strings.TrimSpace(in.Note)
 	in.Address = strings.TrimSpace(in.Address)
+	if in.WeChat != nil {
+		in.Contact = strings.TrimSpace(*in.WeChat)
+		if !wechatID.MatchString(strings.ToLower(in.Contact)) {
+			return m.OrderView{}, api.Problem(400, "请填写有效的微信号，以字母开头，6–20 位")
+		}
+		// 统一保存到原联系方式字段，保持同一订单的幂等指纹。
+		in.WeChat = nil
+	}
 	switch in.Fulfillment {
 	case "", "pickup":
 		// 旧版自提请求使用相同的幂等指纹。

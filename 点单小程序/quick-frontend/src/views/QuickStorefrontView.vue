@@ -1,10 +1,12 @@
 <script setup lang="ts">
 import Icon from '@/components/Icon.vue'
+import ProductGallery from '@/components/ProductGallery.vue'
+import { productImages } from '@/utils/productImages'
 import CustomerAccount from '@/components/CustomerAccount.vue'
 import QuickShop from '@/components/QuickShop.vue'
 import { assetUrl } from '@/config'
 import {useStorefront} from '@/composables/useStorefront'
-const {categories,visible,settings,loading,error,toast,category,overlay,selected,variant,color,quantity,zoomed,accordion,bagProducts,detailInBag,legacySaved,productSections,historyData,historyLoading,historyError,current,account,accountSecure,accountLoading,authError,signIn,saveAccount,logout,checkout,setCheckout,pickupOptions,returnToCheckout,returnToBag,loadOrders,customer,contact,note,pickup,busy,consent,service,fulfillment,address,deliveryRate,deliveryFee,orderStatus,sheet,lines,count,subtotal,checkoutCount,checkoutTooLarge,checkoutLines,directLine,eligibleLines,checkedKeys,canRetryOrder,allChecked,someChecked,lineUnavailable,toggleLine,toggleAll,total,unavailable,selectedSKU,year,serviceContent,money,close,open,openProduct,goCollection,bagHeart,buyNow,changeQuantity,remove,submit,track,openOrders,showService}=useStorefront()
+const {categories,visible,settings,loading,error,toast,category,overlay,selected,variant,color,quantity,accordion,bagProducts,detailInBag,legacySaved,productSections,historyData,historyLoading,historyError,current,account,accountSecure,accountLoading,authError,signIn,saveAccount,logout,checkout,setCheckout,pickupOptions,returnToCheckout,returnToBag,loadOrders,customer,contact,note,pickup,busy,consent,fulfillment,address,deliveryRate,deliveryFee,orderStatus,sheet,lines,count,subtotal,checkoutCount,checkoutTooLarge,checkoutLines,directLine,eligibleLines,checkedKeys,canRetryOrder,allChecked,someChecked,lineUnavailable,toggleLine,toggleAll,total,unavailable,selectedSKU,year,money,close,open,openProduct,goCollection,bagHeart,buyNow,changeQuantity,remove,submit,track,openOrders}=useStorefront()
 </script>
 <template>
 <div class="boutique">
@@ -23,8 +25,8 @@ const {categories,visible,settings,loading,error,toast,category,overlay,selected
     @open-orders="openOrders"
   />
   </template>
-  <Transition name="veil"><div v-if="overlay" class="s-overlay" :class="{'product-overlay':overlay==='product'}" @click.self="close"><section ref="sheet" class="s-sheet" :class="{'s-product-sheet':overlay==='product','s-center-sheet':['service','success'].includes(overlay)}" role="dialog" aria-modal="true" :aria-label="{product:'商品详情',bag:checkout?'填写预约':'购物袋',orders:'我的账号与预约',success:'预约详情',service:'客户服务'}[overlay]"><button class="sheet-close icon-button" aria-label="关闭窗口" @click="close"><Icon name="close" :size="22"/></button>
-    <template v-if="overlay==='product'&&selected"><div class="detail-image" :class="{zoomed}"><img :src="assetUrl(selected.image)" :alt="selected.name"/><button class="icon-button detail-zoom" :aria-label="zoomed?'缩小商品图':'放大商品图'" @click="zoomed=!zoomed"><Icon name="expand"/></button><span class="image-caption">SUXU · {{ selected.english }}</span></div><div class="detail-information"><span class="s-eyebrow">{{ selected.category }} / {{ selected.english }}</span><div class="detail-title"><h2>{{ selected.name }}</h2><button class="icon-button" :class="{saved:detailInBag}" :aria-label="(detailInBag?'管理购物袋中的':'加入购物袋 ')+selected.name"  :aria-pressed="detailInBag" @click="bagHeart(selected)"><Icon name="heart"/></button></div><p class="detail-description">{{ selected.description }}</p><strong class="detail-price">¥ {{ money(selected.price) }}</strong><div class="detail-color"><span>颜色 <b>{{ color||'请选择' }}</b></span><div class="color-options"><button v-for="c in selected.colors" :key="c" :class="{selected:color===c}" @click="color=c" :aria-label="'选择颜色'+c" :aria-pressed="color===c"><i :style="{background:({'奶油白':'#e6dfcf','燕麦色':'#cbb89a','墨黑':'#282824','银白色':'linear-gradient(135deg,#fff,#a5a5a5,#fff)','香槟金':'linear-gradient(135deg,#e0c99e,#b99a62,#e8d7ad)','象牙白':'#f1eadb','苔绿':'#6f7d5b'})[c]||'#c2b69f'}"></i></button></div></div><div class="size-heading"><span>尺寸 / 规格 <b v-if="variant">{{ variant }}</b></span><button @click="showService('size')">选购指南 <Icon name="arrow" :size="13"/></button></div><div class="variant-options"><button v-for="v in selected.options" :key="v" :class="{selected:variant===v}" :aria-pressed="variant===v" @click="variant=v">{{ v }}</button></div><div class="detail-quantity"><span>数量</span><div class="s-stepper"><button :disabled="quantity<=1" aria-label="减少购买数量" @click="quantity--"><Icon name="minus" :size="14"/></button><span>{{ quantity }}</span><button :disabled="quantity>=Math.min(selectedSKU?.stock||0,50)" aria-label="增加购买数量" @click="quantity++"><Icon name="plus" :size="14"/></button></div><small>{{ !variant?'请选择规格':selectedSKU?.stock>0?'可预约':'此规格暂时售罄' }}</small></div><button class="s-primary detail-add" :disabled="!selected.available||!selected.stock||selectedSKU?.stock===0||!settings.open" @click="buyNow">{{ !selected.available||!selected.stock?'暂时售罄':!settings.open?'暂停预约':'立即购买' }} <Icon name="arrow" :size="19"/></button><p class="detail-assurance"><Icon name="check" :size="13"/>支持自提和送货上门</p><div class="detail-accordions"><div v-for="section in productSections" :key="section.key">
+  <Transition name="veil"><div v-if="overlay" class="s-overlay" :class="{'product-overlay':overlay==='product'}" @click.self="close"><section ref="sheet" class="s-sheet" :class="{'s-product-sheet':overlay==='product','s-center-sheet':overlay==='success'}" role="dialog" aria-modal="true" :aria-label="{product:'商品详情',bag:checkout?'填写预约':'购物袋',orders:'我的账号与预约',success:'预约详情'}[overlay]"><button class="sheet-close icon-button" aria-label="关闭窗口" @click="close"><Icon name="close" :size="22"/></button>
+    <template v-if="overlay==='product'&&selected"><ProductGallery :key="JSON.stringify([selected.id, color])" :images="productImages(selected, color).map(assetUrl)" :name="selected.name" /><div class="detail-information"><span class="s-eyebrow">{{ selected.category }} / {{ selected.english }}</span><div class="detail-title"><h2>{{ selected.name }}</h2><button class="icon-button" :class="{saved:detailInBag}" :aria-label="(detailInBag?'管理购物袋中的':'加入购物袋 ')+selected.name"  :aria-pressed="detailInBag" @click="bagHeart(selected)"><Icon name="heart"/></button></div><p class="detail-description">{{ selected.description }}</p><strong class="detail-price">¥ {{ money(selected.price) }}</strong><div class="detail-color"><span>颜色 <b>{{ color||'请选择' }}</b></span><div class="color-options"><button v-for="c in selected.colors" :key="c" :class="{selected:color===c}" @click="color=c" :aria-label="'选择颜色'+c" :aria-pressed="color===c"><i :style="{background:({'奶油白':'#e6dfcf','燕麦色':'#cbb89a','墨黑':'#282824','银白色':'linear-gradient(135deg,#fff,#a5a5a5,#fff)','香槟金':'linear-gradient(135deg,#e0c99e,#b99a62,#e8d7ad)','象牙白':'#f1eadb','苔绿':'#6f7d5b'})[c]||'#c2b69f'}"></i><span>{{ c }}</span></button></div></div><div class="size-heading"><span>尺寸 / 规格 <b v-if="variant">{{ variant }}</b></span></div><div class="variant-options"><button v-for="v in selected.options" :key="v" :class="{selected:variant===v}" :aria-pressed="variant===v" @click="variant=v">{{ v }}</button></div><div class="detail-quantity"><span>数量</span><div class="s-stepper"><button :disabled="quantity<=1" aria-label="减少购买数量" @click="quantity--"><Icon name="minus" :size="14"/></button><span>{{ quantity }}</span><button :disabled="quantity>=Math.min(selectedSKU?.stock||0,50)" aria-label="增加购买数量" @click="quantity++"><Icon name="plus" :size="14"/></button></div><small>{{ !variant?'请选择规格':selectedSKU?.stock>0?'可预约':'此规格暂时售罄' }}</small></div><button class="s-primary detail-add" :disabled="!selected.available||!selected.stock||selectedSKU?.stock===0||!settings.open" @click="buyNow">{{ !selected.available||!selected.stock?'暂时售罄':!settings.open?'暂停预约':'立即购买' }} <Icon name="arrow" :size="19"/></button><p class="detail-assurance"><Icon name="check" :size="13"/>支持自提和送货上门</p><div class="detail-accordions"><div v-for="section in productSections" :key="section.key">
           <button type="button" :aria-expanded="accordion===section.key" @click="accordion=accordion===section.key?'':section.key">{{ section.name }}<Icon :name="accordion===section.key?'minus':'plus'" :size="15"/></button>
           <p v-if="accordion===section.key">{{ section.text }}</p>
         </div></div></div></template>
@@ -41,7 +43,7 @@ const {categories,visible,settings,loading,error,toast,category,overlay,selected
                 :aria-label="'选择 ' + l.product.name + ' · ' + l.variant + ' · ' + l.color" @change="toggleLine(l)">
               <span aria-hidden="true"></span>
             </label>
-            <button class="bag-line-image" @click="openProduct(l.product)"><img :src="assetUrl(l.product.image)" :alt="l.product.name"></button>
+            <button class="bag-line-image" @click="openProduct(l.product, l)"><img :src="assetUrl((productImages(l.product, l.color)[0] || l.product.image))" :alt="l.product.name"></button>
             <div class="bag-line-description">
               <small v-if="l.product.english">{{ l.product.english }}</small>
               <h3>{{ l.product.name }}</h3>
@@ -63,7 +65,7 @@ const {categories,visible,settings,loading,error,toast,category,overlay,selected
           <button class="checkout-back" type="button" :disabled="busy" @click="setCheckout(false)">← {{ directLine ? '返回商品' : '返回购物袋' }}</button>
           <ul v-if="checkoutLines.length" class="checkout-summary" aria-label="本次预约商品">
             <li v-for="line in checkoutLines" :key="line.key">
-              <img :src="assetUrl(line.product.image)" alt="">
+              <img :src="assetUrl((productImages(line.product, line.color)[0] || line.product.image))" alt="">
               <span>{{ line.product.name }}<small>{{ line.variant }} · {{ line.color }} × {{ line.quantity }}</small></span>
               <strong>¥ {{ money(line.quantity * line.product.price) }}</strong>
             </li>
@@ -71,16 +73,18 @@ const {categories,visible,settings,loading,error,toast,category,overlay,selected
           <p v-else-if="!canRetryOrder" class="s-danger" role="status">所选商品已下架，请返回重新选择。</p>
           <fieldset class="checkout-form-fields" :disabled="busy || canRetryOrder">
           <div v-if="account" class="checkout-account">
-            <div><strong>{{ account.name }}</strong><span>{{ account.contact }} · {{ account.number }}</span></div>
+            <div><strong>{{ account.name }}</strong><span>{{ account.number }}</span></div>
             <button type="button" :disabled="busy" @click="openOrders(true)">编辑资料</button>
           </div>
-          <template v-else>
-            <button v-if="accountSecure" class="checkout-back" type="button" :disabled="busy" @click="openOrders(true)">登录后自动填写顾客资料</button>
-            <div class="checkout-fields">
-              <label>联系人称呼 <span>*</span><input v-model="customer" maxlength="30" placeholder="请填写称呼" autocomplete="name"></label>
-              <label>联系方式 <span>*</span><input v-model="contact" maxlength="40" placeholder="手机号或微信号" autocomplete="off"></label>
-            </div>
-          </template>
+          <button v-else-if="accountSecure" class="checkout-back" type="button" :disabled="busy" @click="openOrders(true)">登录后自动填写顾客资料</button>
+          <div class="checkout-fields" :class="{ 'checkout-fields-single': account }">
+            <label v-if="!account">联系人称呼 <span>*</span><input v-model="customer" maxlength="30" placeholder="请填写称呼" autocomplete="name"></label>
+            <label>微信号 <span>*</span>
+              <input v-model.trim="contact" name="wechat" maxlength="20" placeholder="请输入微信号" autocomplete="off"
+                autocapitalize="none" spellcheck="false" aria-describedby="checkout-wechat-hint" aria-required="true">
+              <small id="checkout-wechat-hint" class="checkout-wechat-hint">提交预约后，请留意并通过商家的微信好友申请，以便确认取货。</small>
+            </label>
+          </div>
           <fieldset class="fulfillment-options">
             <legend>取货方式</legend>
             <label><input v-model="fulfillment" type="radio" name="fulfillment" value="pickup"><span>自提</span></label>
@@ -155,7 +159,6 @@ const {categories,visible,settings,loading,error,toast,category,overlay,selected
       </section>
     </template>
     <template v-else-if="overlay==='success'&&current"><div class="success-symbol"><Icon :name="current.status==='cancelled'?'close':'check'" :size="26"/></div><span class="s-eyebrow">A LITTLE BEAUTY, RESERVED FOR YOU</span><h2 class="success-title">{{ current.status==='ready'?'美好，已为你备妥。':current.status==='completed'?'谢谢你，让美好相伴。':current.status==='cancelled'?'本次预约已取消。':'心选已留，静候相见。' }}</h2><p class="success-subtitle">{{ orderStatus(current) }} · {{ current.paid?'已确认收款':current.fulfillment==='delivery'?'待线下付款':'到店付款' }}</p><div class="reservation-id"><span>预约号</span><strong>{{ current.number }}</strong><small v-if="current.customerNumber">顾客编号 {{ current.customerNumber }}</small></div><div v-if="current.status!=='cancelled'" class="reservation-steps"><span v-for="(s,i) in ['pending','confirmed','ready','completed']" :key="s" :class="{done:['pending','confirmed','ready','completed'].indexOf(current.status)>=i}"><i>{{ i+1 }}</i>{{ ['预约提交','确认备货',current.fulfillment==='delivery'?'送货上门':'到店自提','完成'][i] }}</span></div><div class="success-items"><div v-for="(i,n) in current.items" :key="n"><img :src="assetUrl(i.image)" :alt="i.name"/><div><h3>{{ i.name }}</h3><p>{{ i.color }} · {{ i.variant }} × {{ i.quantity }}</p></div><span>¥ {{ money(i.price*i.quantity) }}</span></div></div><div v-if="current.deliveryFee" class="success-total delivery-fee"><span>配送费</span><span>¥ {{ money(current.deliveryFee) }}</span></div><div class="success-total"><span>合计</span><strong>¥ {{ money(current.total) }}</strong></div><div class="pickup-info"><Icon name="pin" :size="17"/><div v-if="current.fulfillment==='delivery'"><strong>送货上门</strong><p>{{ current.address }}</p></div><div v-else><strong>{{ settings.location || '自提' }}</strong><p>{{ [settings.hours,current.pickup].filter(Boolean).join(' · ') }}</p></div></div><p v-if="current.note" class="reservation-note">留言：{{ current.note }}</p><button class="s-primary" @click="close">继续探索 <Icon name="arrow" :size="18"/></button></template>
-    <template v-else-if="overlay==='service'"><div class="service-illustration"><Icon :name="service==='pickup'?'bag':service==='care'?'diamond':'leaf'" :size="42"/></div><span class="s-eyebrow">{{ serviceContent[service].en }}</span><h2 class="service-title">{{ serviceContent[service].title }}</h2><p class="service-body">{{ serviceContent[service].text }}</p><div class="service-location"><Icon name="pin" :size="17"/><span>{{ settings.location }}<small>{{ settings.hours }}</small></span></div><button class="s-outline" @click="close">回到我的心选 <Icon name="arrow" :size="17"/></button></template>
   </section></div></Transition>
   <Transition name="toast"><div v-if="toast" class="s-toast" role="status"><Icon name="check" :size="16"/>{{ toast }}</div></Transition>
 </div>

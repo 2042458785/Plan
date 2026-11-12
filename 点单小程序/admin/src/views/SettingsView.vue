@@ -10,11 +10,11 @@
         <el-form-item label="店铺名称"><el-input v-model.trim="form.name" maxlength="30"/></el-form-item>
         <el-form-item label="店铺公告"><el-input v-model.trim="form.announcement" type="textarea" :rows="2" maxlength="240"/></el-form-item>
         <el-form-item label="快速小程序封面">
-          <div class="settings-cover-preview"><img :src="preview || form.quickCover || '/images/hero.jpg'" alt="快速小程序封面预览"></div>
+          <div class="settings-cover-preview"><img :src="preview || form.quickCover || defaultCover" alt="快速小程序封面预览"></div>
           <input ref="cover" type="file" accept="image/jpeg,image/png,image/webp,image/gif" hidden @change="selectCover">
           <el-button size="small" :disabled="saving" @click="$refs.cover.click()">上传封面</el-button>
           <el-button v-if="preview || form.quickCover" size="small" :disabled="saving" @click="clearCover">使用默认封面</el-button>
-          <p class="form-hint">支持 JPG、PNG、WebP、GIF，最多 4 MB。建议上传横向照片。</p>
+          <p class="form-hint">支持 JPG、PNG、WebP、GIF，最多 4 MB。建议使用横向照片，并将主体放在画面中间。</p>
         </el-form-item>
         <el-form-item label="自提地点"><el-input v-model.trim="form.location" maxlength="80"/></el-form-item>
         <el-form-item label="营业时间"><el-input v-model.trim="form.hours" maxlength="40"/></el-form-item>
@@ -34,6 +34,7 @@ export default {
   data: () => ({
     form: { name: '', announcement: '', location: '', hours: '', quickCover: '', open: false, version: 0 },
     loading: true, saving: false, selectedCover: null, preview: '',
+    defaultCover: process.env.BASE_URL + 'images/quick-cover.jpg',
   }),
   mounted() { this.load() },
   beforeDestroy() { this.clearSelection() },

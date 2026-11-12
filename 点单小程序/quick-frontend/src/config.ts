@@ -15,7 +15,3 @@ export function assetUrl(path: string): string {
     ? `${APP_CONFIG.static_url}${path}`
     : `${import.meta.env.BASE_URL}${path.slice(1)}`
 }
-
-export const storefrontURL = import.meta.env.DEV
-  ? `${window.location.protocol}//${window.location.hostname}:8081/`
-  : '/'

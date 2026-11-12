@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
+	"slices"
 	"sort"
 	"time"
 )
@@ -78,7 +79,9 @@ func (d *CatalogDao) SaveProduct(ctx context.Context, id string, input m.Product
 		product.Description = input.Description
 		product.English = input.English
 		product.Price = input.Price
-		product.Image = input.Image
+		if err := updateProductImages(&product, input); err != nil {
+			return err
+		}
 		product.Available = input.Available
 		product.Material = input.Material
 		product.Details = input.Details
@@ -146,6 +149,42 @@ func (d *CatalogDao) SaveProduct(ctx context.Context, id string, input m.Product
 	})
 	return result, e
 }
+func updateProductImages(product *m.Product, input m.ProductInput) error {
+	if input.Gallery != nil {
+		product.Gallery = input.Gallery
+		product.Image = ""
+	} else if input.Image != product.Image {
+		product.Image = input.Image
+		if len(product.Gallery) > 0 {
+			// 旧版只更新首图，保留其余图片。
+			remaining := slices.DeleteFunc(product.Gallery[1:], func(image string) bool { return image == input.Image })
+			product.Gallery = append([]string{input.Image}, remaining...)
+		}
+	}
+	if input.ColorImages != nil {
+		product.ColorImages = input.ColorImages
+	}
+	// 只保留当前规格使用的颜色，且用规格顺序决定颜色封面的回退值。
+	activeImages := make(map[string][]string)
+	for _, sku := range input.SKUs {
+		images := product.ColorImages[sku.Color]
+		if len(images) != 0 {
+			activeImages[sku.Color] = images
+			if product.Image == "" {
+				product.Image = images[0]
+			}
+		}
+	}
+	product.ColorImages = activeImages
+	if len(product.Gallery) != 0 {
+		product.Image = product.Gallery[0]
+	}
+	if product.Image == "" {
+		return api.Problem(400, "请在商品相册或任一颜色上传至少一张图片")
+	}
+	return nil
+}
+
 func (d *CatalogDao) SaveSettings(ctx context.Context, input m.ShopSetting, adminID uint) (m.ShopSetting, error) {
 	e := utils.WithTransaction(ctx, d.Orm, func(tx *gorm.DB) error {
 		var old m.ShopSetting

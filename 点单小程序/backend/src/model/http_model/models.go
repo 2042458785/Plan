@@ -8,24 +8,34 @@ type Category struct {
 	Position int    `json:"position"`
 }
 type Product struct {
-	ID          string       `gorm:"primaryKey;size:48" json:"id"`
-	CategoryID  uint         `gorm:"not null;index" json:"categoryId"`
-	Category    Category     `gorm:"constraint:OnUpdate:RESTRICT,OnDelete:RESTRICT" json:"-"`
-	Name        string       `gorm:"size:100;not null" json:"name"`
-	English     string       `gorm:"size:200" json:"english"`
-	Description string       `gorm:"size:500" json:"description"`
-	Price       int64        `gorm:"not null" json:"price"`
-	Image       string       `gorm:"size:1000" json:"image"`
-	Available   bool         `gorm:"not null" json:"available"`
-	Material    string       `gorm:"size:300" json:"material"`
-	Details     string       `gorm:"type:text" json:"details"`
-	Care        string       `gorm:"type:text" json:"care"`
-	Version     uint64       `gorm:"not null;default:1" json:"version"`
-	Position    int          `json:"-"`
-	SKUs        []ProductSKU `gorm:"foreignKey:ProductID" json:"skus"`
-	CreatedAt   time.Time    `json:"-"`
-	UpdatedAt   time.Time    `json:"updatedAt"`
+	ID          string              `gorm:"primaryKey;size:48" json:"id"`
+	CategoryID  uint                `gorm:"not null;index" json:"categoryId"`
+	Category    Category            `gorm:"constraint:OnUpdate:RESTRICT,OnDelete:RESTRICT" json:"-"`
+	Name        string              `gorm:"size:100;not null" json:"name"`
+	English     string              `gorm:"size:200" json:"english"`
+	Description string              `gorm:"size:500" json:"description"`
+	Price       int64               `gorm:"not null" json:"price"`
+	Image       string              `gorm:"size:1000" json:"image"`
+	Gallery     []string            `gorm:"type:mediumtext;serializer:json" json:"gallery"`
+	ColorImages map[string][]string `gorm:"type:mediumtext;serializer:json" json:"colorImages"`
+	Available   bool                `gorm:"not null" json:"available"`
+	Material    string              `gorm:"size:300" json:"material"`
+	Details     string              `gorm:"type:text" json:"details"`
+	Care        string              `gorm:"type:text" json:"care"`
+	Version     uint64              `gorm:"not null;default:1" json:"version"`
+	Position    int                 `json:"-"`
+	SKUs        []ProductSKU        `gorm:"foreignKey:ProductID" json:"skus"`
+	CreatedAt   time.Time           `json:"-"`
+	UpdatedAt   time.Time           `json:"updatedAt"`
 }
+
+func (p Product) ImageForColor(color string) string {
+	if images := p.ColorImages[color]; len(images) != 0 {
+		return images[0]
+	}
+	return p.Image
+}
+
 type ProductSKU struct {
 	ID        uint      `gorm:"primaryKey" json:"id"`
 	ProductID string    `gorm:"size:48;not null;uniqueIndex:idx_sku_option" json:"productId"`

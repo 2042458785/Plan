@@ -28,31 +28,26 @@
         <h2>{{ activeCategory ? activeCategory.name : '商品目录' }} <small>{{ filtered.length }} 件</small></h2>
         <el-input v-model="search" prefix-icon="el-icon-search" placeholder="搜索商品名称或分类" clearable />
       </div>
-      <el-table v-loading="loading" :data="filtered" stripe :empty-text="search ? '没有匹配的商品' : '暂无商品'">
-        <el-table-column label="商品" min-width="220">
-          <template slot-scope="{row}">
+      <div v-loading="loading">
+        <ul v-if="filtered.length" class="inventory-list" aria-label="商品目录">
+          <li v-for="product in filtered" :key="product.id" class="inventory-row">
             <div class="table-artwork">
-              <img :src="row.image" :alt="row.name" loading="lazy">
-              <div><strong>{{ row.name }}</strong><span>{{ row.category }}</span></div>
+              <img :src="product.image" :alt="product.name" loading="lazy">
+              <div><strong>{{ product.name }}</strong><span>{{ product.category }}</span></div>
             </div>
-          </template>
-        </el-table-column>
-        <el-table-column label="售价" width="100">
-          <template slot-scope="{row}">¥ {{ money(row.price) }}</template>
-        </el-table-column>
-        <el-table-column label="可售库存" prop="stock" width="85" />
-        <el-table-column label="状态" width="85">
-          <template slot-scope="{row}">
-            <el-tag size="small" :type="row.available ? 'success' : 'info'" effect="plain">{{ row.available ? '在售' : '已下架' }}</el-tag>
-          </template>
-        </el-table-column>
-        <el-table-column label="操作" width="130">
-          <template slot-scope="{row}">
-            <el-button type="text" @click="edit(row)">编辑</el-button>
-            <el-button type="text" :disabled="!!workingProduct" @click="toggle(row)">{{ row.available ? '下架' : '上架' }}</el-button>
-          </template>
-        </el-table-column>
-      </el-table>
+            <span class="inventory-price">¥ {{ money(product.price) }}</span>
+            <span class="inventory-stock">库存 {{ product.stock }}</span>
+            <el-tag size="small" :type="product.available ? 'success' : 'info'" effect="plain">
+              {{ product.available ? '在售' : '已下架' }}
+            </el-tag>
+            <div class="inventory-actions">
+              <el-button type="text" @click="edit(product)">编辑</el-button>
+              <el-button type="text" :disabled="!!workingProduct" @click="toggle(product)">{{ product.available ? '下架' : '上架' }}</el-button>
+            </div>
+          </li>
+        </ul>
+        <div v-else class="panel-empty">{{ search ? '没有匹配的商品' : '暂无商品' }}</div>
+      </div>
     </section>
 
     <el-dialog :title="categoryDraft.id ? '修改分类名称' : '新增分类'" :visible.sync="categoryDialog" width="420px" custom-class="category-editor" append-to-body>
@@ -68,50 +63,50 @@
     </el-dialog>
 
     <el-dialog :title="draft.id === 'new' ? '添加商品' : '编辑商品'" :visible.sync="dialog" width="720px"
-      :close-on-click-modal="false" append-to-body custom-class="product-editor" @closed="clearImageSelection">
-      <el-form label-position="top" @submit.native.prevent="save">
-        <div class="form-two">
-          <el-form-item label="商品名称" required><el-input v-model.trim="draft.name" maxlength="30" /></el-form-item>
-          <el-form-item label="分类" required>
-            <el-select v-model="draft.categoryId" popper-class="product-category-popper" placeholder="选择已有分类">
-              <el-option v-for="c in categories" :key="c.id" :label="c.name" :value="c.id" />
-            </el-select>
-          </el-form-item>
-        </div>
+      :close-on-click-modal="false" :close-on-press-escape="!saving" :show-close="!saving"
+      append-to-body custom-class="product-editor" @closed="clearPhotos">
+      <el-form id="product-editor-form" label-position="top" :disabled="saving" @submit.native.prevent="save">
+        <el-form-item label="商品名称" required><el-input v-model.trim="draft.name" maxlength="30" /></el-form-item>
+        <fieldset class="editor-categories" :disabled="saving">
+          <legend>分类 <span aria-hidden="true">*</span></legend>
+          <label v-for="category in categories" :key="category.id">
+            <input v-model="draft.categoryId" type="radio" name="product-category" :value="category.id">
+            <span>{{ category.name }}</span>
+          </label>
+        </fieldset>
         <div class="form-two">
           <el-form-item label="售价（元）" required><el-input v-model.trim="draft.yuan" inputmode="decimal" placeholder="例如 29.90" /></el-form-item>
           <el-form-item label="上架状态"><el-switch v-model="draft.available" active-text="在售" inactive-text="下架" /></el-form-item>
         </div>
-        <el-form-item label="商品图片" required>
-          <div class="product-image-control">
-            <img v-if="imagePreview || draft.image" :src="imagePreview || draft.image" alt="商品图片预览">
-            <div>
-              <input ref="fileInput" class="product-file-input" type="file" accept="image/jpeg,image/png,image/webp,image/gif" @change="selectImage">
-              <el-button size="small" @click="$refs.fileInput.click()">选择图片</el-button>
-              <el-button v-if="imageFile" type="text" @click="clearImageSelection">取消选择</el-button>
-              <p class="form-hint">{{ imageFile ? imageFile.name : 'JPG、PNG、WebP、GIF，最多 4 MB。' }}</p>
-            </div>
-          </div>
-          <el-input v-if="!imageFile" v-model.trim="draft.image" maxlength="1000" placeholder="也可以填写 HTTPS 图片地址" />
-        </el-form-item>
+        <section class="product-photos" aria-labelledby="product-photos-title">
+          <h3 id="product-photos-title">商品相册</h3>
+          <p class="form-hint">第一张作为商品列表封面。每组最多 8 张，单张不超过 4 MB。</p>
+          <ProductPhotoGroup :key="editorSession" :photos="galleryPhotos" label="商品相册" primary-label="封面" :disabled="saving"
+            @files="addPhotos(galleryPhotos, $event)" @link="addPhotoLink(galleryPhotos, $event)"
+            @remove="removePhoto(galleryPhotos, $event)" @primary="makePrimary(galleryPhotos, $event)" />
+        </section>
         <div class="sku-heading"><h3>规格与库存</h3><el-button type="text" icon="el-icon-plus" @click="addSKU">添加规格</el-button></div>
-        <el-table :data="draft.skus" border size="small">
-          <el-table-column label="规格 / 戒围" min-width="100">
-            <template slot-scope="{row}"><el-input v-model.trim="row.variant" placeholder="标准款" maxlength="30" /></template>
-          </el-table-column>
-          <el-table-column label="颜色" min-width="90">
-            <template slot-scope="{row}"><el-input v-model.trim="row.color" placeholder="原色" maxlength="30" /></template>
-          </el-table-column>
-          <el-table-column label="库存" width="115">
-            <template slot-scope="{row}"><el-input-number v-model="row.stock" :min="0" :max="100000" controls-position="right" size="small" /></template>
-          </el-table-column>
-          <el-table-column width="55">
-            <template slot-scope="scope">
-              <el-button type="text" class="danger-text" :disabled="draft.skus.length <= 1" @click="draft.skus.splice(scope.$index, 1)">移除</el-button>
-            </template>
-          </el-table-column>
-        </el-table>
+        <div class="editor-skus">
+          <div v-for="(sku, index) in draft.skus" :key="index" class="editor-sku">
+            <label>规格 / 戒围<input v-model.trim="sku.variant" :disabled="saving" class="el-input__inner" placeholder="标准款" maxlength="30"></label>
+            <label>颜色<input v-model.trim="sku.color" :disabled="saving" @focus="originalColor = sku.color" @change="renameColorPhotos(sku.color)" class="el-input__inner" placeholder="原色" maxlength="30"></label>
+            <label>库存<input v-model.trim="sku.stock" :disabled="saving" class="el-input__inner" name="sku-stock" inputmode="numeric" maxlength="6" placeholder="0"></label>
+            <el-button type="text" class="danger-text" :disabled="draft.skus.length <= 1" :aria-label="'移除规格 ' + (index + 1)"
+              @click="draft.skus.splice(index, 1)">移除</el-button>
+          </div>
+        </div>
         <p class="form-hint">每种规格和颜色单独计库存。</p>
+        <section class="product-photos" aria-labelledby="color-photos-title">
+          <h3 id="color-photos-title">按颜色配图</h3>
+          <p class="form-hint">颜色来自上方规格。同色规格共用一组图，未配图时展示商品相册；没有相册时展示列表封面。</p>
+          <details v-for="color in draftColors" :key="editorSession + ':' + color" class="color-photo-group">
+            <summary><strong>{{ color }}</strong><span>{{ photosFor(color).length ? photosFor(color).length + ' 张' : '未配图' }}</span></summary>
+            <ProductPhotoGroup :photos="photosFor(color)" :label="color" :disabled="saving"
+              @files="addPhotos(photosFor(color, true), $event)" @link="addPhotoLink(photosFor(color, true), $event)"
+              @remove="removePhoto(photosFor(color), $event)" @primary="makePrimary(photosFor(color), $event)" />
+          </details>
+          <p v-if="!draftColors.length" class="form-hint">填写规格颜色后，即可为该颜色添加图片。</p>
+        </section>
         <el-collapse class="optional-product-fields">
           <el-collapse-item title="描述、材质与其他资料（选填）" name="details">
             <el-form-item label="商品描述"><el-input v-model.trim="draft.description" maxlength="120" /></el-form-item>
@@ -123,17 +118,18 @@
             <el-form-item label="养护说明"><el-input v-model="draft.care" type="textarea" :rows="3" maxlength="800" /></el-form-item>
           </el-collapse-item>
         </el-collapse>
-        <div class="dialog-actions">
-          <el-button @click="dialog = false">取消</el-button>
-          <el-button type="primary" native-type="submit" :loading="saving">保存商品</el-button>
-        </div>
       </el-form>
+      <div slot="footer" class="dialog-actions product-editor-actions">
+        <el-button :disabled="saving" @click="dialog = false">取消</el-button>
+        <el-button type="primary" native-type="submit" form="product-editor-form" :loading="saving">保存商品</el-button>
+      </div>
     </el-dialog>
   </div>
 </template>
 
 <script>
 import { loadCatalog, saveProduct, saveCategory, deleteCategory, uploadImage } from '@/api/catalog'
+import ProductPhotoGroup from '@/components/ProductPhotoGroup.vue'
 import { money, parseYuan } from '@/utils/money'
 
 const fresh = () => ({
@@ -142,14 +138,20 @@ const fresh = () => ({
   skus: [{ variant: '标准款', color: '原色', stock: 0 }],
 })
 
+const savedPhotos = urls => urls.map(url => ({ url, file: null }))
+
 export default {
+  components: { ProductPhotoGroup },
   data: () => ({
     products: [], categories: [], categoryId: null, search: '', loading: true,
     categoryDraft: { id: null, name: '' }, categoryDialog: false, categoryWorking: false,
     draft: fresh(), dialog: false, saving: false, workingProduct: '',
-    imageFile: null, imagePreview: '',
+    galleryPhotos: [], colorPhotos: [], originalColor: '', editorSession: 0,
   }),
   computed: {
+    draftColors() {
+      return [...new Set(this.draft.skus.map(sku => sku.color.trim()).filter(Boolean))]
+    },
     activeCategory() {
       return this.categories.find(category => category.id === this.categoryId)
     },
@@ -170,7 +172,7 @@ export default {
     this.load()
   },
   beforeDestroy() {
-    this.clearImageSelection()
+    this.clearPhotos()
   },
   methods: {
     money,
@@ -230,47 +232,108 @@ export default {
       }
     },
     edit(product) {
-      this.clearImageSelection()
+      this.clearPhotos()
       this.draft = product
         ? { ...product, yuan: money(product.price), skus: product.skus.map(sku => ({ ...sku })) }
         : { ...fresh(), categoryId: this.categoryId || (this.categories.length === 1 ? this.categories[0].id : null) }
+      this.editorSession += 1
+      if (product) {
+        this.colorPhotos = Object.entries(product.colorImages || {}).map(([color, urls]) => ({ color, photos: savedPhotos(urls) }))
+        this.galleryPhotos = savedPhotos(product.gallery?.length ? product.gallery :
+          product.image && !this.colorPhotos.some(group => group.photos.length) ? [product.image] : [])
+      }
       this.dialog = true
     },
     addSKU() {
       this.draft.skus.push({ variant: '', color: '', stock: 0 })
     },
-    selectImage(event) {
-      const file = event.target.files[0]
-      if (!file) return
-      if (file.size > 4 * 1024 * 1024 || (file.type && !['image/jpeg', 'image/png', 'image/webp', 'image/gif'].includes(file.type))) {
-        this.clearImageSelection()
-        this.$message.error('请选择不超过 4 MB 的 JPG、PNG、WebP 或 GIF 图片')
+    photosFor(color, create = false) {
+      const group = this.colorPhotos.find(item => item.color === color)
+      if (group) return group.photos
+      const photos = []
+      if (create) this.colorPhotos.push({ color, photos })
+      return photos
+    },
+    renameColorPhotos(color) {
+      const oldColor = this.originalColor
+      if (!color || oldColor === color || this.draftColors.includes(oldColor) || this.photosFor(color).length) return
+      const group = this.colorPhotos.find(item => item.color === oldColor)
+      if (!group) return
+      this.colorPhotos = this.colorPhotos.filter(item => item.color !== color)
+      group.color = color
+    },
+    addPhotos(photos, files) {
+      const formats = ['image/jpeg', 'image/png', 'image/webp', 'image/gif']
+      if (files.some(file => !file.size || file.size > 4 * 1024 * 1024 || (file.type && !formats.includes(file.type)))) {
+        this.$message.warning('请选择不超过 4 MB 的 JPG、PNG、WebP 或 GIF 图片')
         return
       }
-      if (this.imagePreview) URL.revokeObjectURL(this.imagePreview)
-      this.imageFile = file
-      this.imagePreview = URL.createObjectURL(file)
+      if (photos.length + files.length > 8) {
+        this.$message.warning('每组最多 8 张图片，请减少选择数量')
+        return
+      }
+      photos.push(...files.map(file => ({ file, url: URL.createObjectURL(file) })))
     },
-    clearImageSelection() {
-      if (this.imagePreview) URL.revokeObjectURL(this.imagePreview)
-      this.imageFile = null
-      this.imagePreview = ''
-      if (this.$refs.fileInput) this.$refs.fileInput.value = ''
+    addPhotoLink(photos, link) {
+      if (!/^https:\/\/[^\s]+$/i.test(link) || photos.some(photo => photo.url === link) || photos.length >= 8) {
+        this.$message.warning('请输入有效且未添加的 HTTPS 图片地址')
+        return
+      }
+      photos.push({ url: link, file: null })
+    },
+    removePhoto(photos, index) {
+      const [photo] = photos.splice(index, 1)
+      if (photo.file) URL.revokeObjectURL(photo.url)
+    },
+    makePrimary(photos, index) {
+      const [photo] = photos.splice(index, 1)
+      photos.unshift(photo)
+    },
+    clearPhotos() {
+      for (const photo of [...this.galleryPhotos, ...this.colorPhotos.flatMap(group => group.photos)]) {
+        if (photo.file) URL.revokeObjectURL(photo.url)
+      }
+      this.galleryPhotos = []
+      this.colorPhotos = []
+      this.originalColor = ''
+    },
+    async uploadPhotos(photos) {
+      for (const photo of photos) {
+        if (!photo.file) continue
+        const { url } = await uploadImage(photo.file)
+        URL.revokeObjectURL(photo.url)
+        photo.url = url
+        photo.file = null
+      }
+      return photos.map(photo => photo.url)
     },
     async save() {
       if (this.saving) return
-      if (!this.draft.name || !this.draft.categoryId || !(this.imageFile || this.draft.image)) {
-        this.$message.warning('请填写商品名称，选择分类和图片')
+      if (!this.draft.name || !this.draft.categoryId) {
+        this.$message.warning('请填写商品名称并选择分类')
+        return
+      }
+      if (this.draft.skus.some(({ stock }) => !/^\d{1,6}$/.test(String(stock)) || Number(stock) > 100000)) {
+        this.$message.warning('库存须为 0 至 100000 的整数')
+        return
+      }
+      if (!this.draft.skus.every(sku => sku.variant && sku.color)) {
+        this.$message.warning('请填写每项规格和颜色')
+        return
+      }
+      const colorGroups = this.colorPhotos.filter(group => this.draftColors.includes(group.color) && group.photos.length)
+      if (!this.galleryPhotos.length && !colorGroups.length) {
+        this.$message.warning('请在商品相册或任一颜色添加图片')
         return
       }
       this.saving = true
       try {
         const price = parseYuan(this.draft.yuan)
-        if (this.imageFile) {
-          this.draft.image = (await uploadImage(this.imageFile)).url
-          this.clearImageSelection()
-        }
-        await saveProduct(this.draft.id, { ...this.draft, price })
+        const skus = this.draft.skus.map(sku => ({ ...sku, stock: Number(sku.stock) }))
+        const gallery = await this.uploadPhotos(this.galleryPhotos)
+        const colorImages = Object.create(null)
+        for (const group of colorGroups) colorImages[group.color] = await this.uploadPhotos(group.photos)
+        await saveProduct(this.draft.id, { ...this.draft, price, skus, image: gallery[0] || '', gallery, colorImages })
         this.dialog = false
         await this.load()
         this.$message.success('商品已保存')

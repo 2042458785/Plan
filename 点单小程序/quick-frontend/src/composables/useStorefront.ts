@@ -8,14 +8,15 @@ import type {Product,Category,ShopSetting,BagLine} from '@/types/catalog'
 export function useStorefront(){
 
 const products=ref<Product[]>([]),settings=ref<ShopSetting>({name:'素序 SUXU',announcement:'将日常，交给心动。',location:'',hours:'',open:false,version:0}),loading=ref(true),error=ref(''),toast=ref('')
-const category=ref('全部商品'),sort=ref('curated'),search=ref(''),view=ref('home'),overlay=ref(''),variant=ref(''),color=ref(''),quantity=ref(1),zoomed=ref(false),accordion=ref('detail')
+const category=ref('全部商品'),sort=ref('curated'),search=ref(''),view=ref('home'),overlay=ref(''),variant=ref(''),color=ref(''),quantity=ref(1),accordion=ref('detail')
 const selectedId = ref('')
 const selected = computed(() => products.value.find(product => product.id === selectedId.value) ?? null)
 const cart=computed<BagLine[]>({get:()=>store.state.bag.items,set:v=>store.commit('bag/setItems',v)}),favorites=computed<string[]>({get:()=>store.state.wishlist.ids,set:v=>store.commit('wishlist/setIds',v)}),history=ref(load('suxu-orders-v1',[])),historyData=ref([]),current=ref(null)
-const customer=ref(''),contact=ref(''),note=ref(''),pickup=ref('今日营业时间内自提'),busy=ref(false),consent=ref(false),service=ref('about')
+const customer=ref(''),contact=ref(''),note=ref(''),pickup=ref('今日营业时间内自提'),busy=ref(false),consent=ref(false)
 const fulfillment = ref<'pickup' | 'delivery'>('pickup'), address = ref(''), deliveryRate = ref(200)
-const serviceReturn=ref('');const collection=ref<HTMLElement|null>(null),searchInput=ref<HTMLInputElement|null>(null),sheet=ref<HTMLElement|null>(null)
+const collection=ref<HTMLElement|null>(null),searchInput=ref<HTMLInputElement|null>(null),sheet=ref<HTMLElement|null>(null)
 const checkout = ref(false), returnToCheckout = ref(false), historyLoading = ref(false), historyError = ref('')
+const wechatID = /^[A-Za-z][A-Za-z0-9_-]{5,19}$/
 const pickupOptions = ['今日营业时间内自提', '明日营业时间内自提', '和店家商量时间']
 const { account, secure: accountSecure, loading: accountLoading, authError, signedIn, request: accountRequest, restore: restoreAccount, authenticate, save: saveAccount, logout } = useCustomer(notify)
 let interval,toastTimer;let focusBefore:HTMLElement|null=null
@@ -126,7 +127,7 @@ async function refresh() {
   error.value = ''
 }
 
-function close(){if(busy.value)return;if(overlay.value==='orders'&&returnToCheckout.value){returnToBag();return}if(overlay.value==='service'&&serviceReturn.value==='product'){overlay.value='product';serviceReturn.value='';return}overlay.value='';zoomed.value=false}
+function close(){if(busy.value)return;if(overlay.value==='orders'&&returnToCheckout.value){returnToBag();return}overlay.value=''}
 function open(name) {
   if (name === 'bag') {
     pendingOrder.value = null
@@ -157,10 +158,17 @@ function setCheckout(value: boolean) {
 function fillFromAccount() {
   if (!account.value) return
   customer.value = account.value.name
-  contact.value = account.value.contact
+  if (!contact.value && wechatID.test(account.value.contact)) contact.value = account.value.contact
   if (!address.value) address.value = account.value.dorm
 }
-function openProduct(p){selectedId.value=p.id;variant.value=p.options?.length===1?p.options[0]:'';color.value=p.colors?.[0]||'';quantity.value=1;zoomed.value=false;accordion.value=p.details?.trim()?'detail':'';overlay.value='product'}
+function openProduct(product: Product, line?: BagLine) {
+  selectedId.value = product.id
+  variant.value = line?.variant ?? (product.options.length === 1 ? product.options[0] : '')
+  color.value = line?.color ?? product.colors[0] ?? ''
+  quantity.value = 1
+  accordion.value = product.details?.trim() ? 'detail' : ''
+  overlay.value = 'product'
+}
 function goCollection(c='全部商品',v='home'){category.value=c;view.value=v;search.value='';close();nextTick(()=>collection.value?.scrollIntoView({behavior:matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth',block:'start'}))}
 function runSearch(){category.value='全部商品';view.value='home';close();nextTick(()=>collection.value?.scrollIntoView({behavior:'smooth'}))}
 function home(){view.value='home';category.value='全部商品';search.value='';close();window.scrollTo({top:0,behavior:'smooth'})}
@@ -236,6 +244,7 @@ type PendingOrder = {
     items: Pick<BagLine, 'productId' | 'quantity' | 'variant' | 'color'>[]
     customer: string
     contact: string
+    wechat: string
     note: string
     pickup: string
     fulfillment?: string
@@ -262,7 +271,7 @@ async function submit() {
   if (checkoutTooLarge.value || unavailable.value || !settings.value.open || !checkoutLines.value.length) return
   if (!customer.value.trim()) { notify('请填写联系人称呼'); return }
   const delivering = fulfillment.value === 'delivery'
-  if (!contact.value.trim()) { notify('请填写手机号或微信号'); return }
+  if (!wechatID.test(contact.value.trim())) { notify('请填写有效的微信号，以字母开头，6–20 位'); return }
   if (delivering && !address.value.trim()) {
     notify('请填写寝室楼栋和寝室号')
     return
@@ -273,7 +282,7 @@ async function submit() {
   const payload = {
     items: submitted.map(({ productId, quantity, variant, color }) => ({ productId, quantity, variant, color })),
     customer: customer.value,
-    contact: contact.value,
+    contact: contact.value.trim(),
     note: note.value,
     pickup: delivering ? '' : pickup.value,
     ...(delivering ? { fulfillment: 'delivery', address: address.value } : {}),
@@ -287,13 +296,14 @@ async function submit() {
   }
   await sendOrder({
     accountNumber,
-    data: { ...payload, key: attempt.key, expectedTotal: total.value },
+    data: { ...payload, wechat: payload.contact, key: attempt.key, expectedTotal: total.value },
     bagLines: directLine.value ? [] : submitted.map(({key, quantity}) => ({key, quantity})),
   })
 }
 
 async function sendOrder(attempt: PendingOrder) {
   busy.value = true
+  toast.value = ''
   ;(document.activeElement as HTMLElement | null)?.blur()
   try {
     const order = signedIn.value
@@ -394,11 +404,9 @@ watch(signedIn, (active, wasActive) => {
   consent.value = false
   if (overlay.value === 'orders') void loadOrders()
 })
-function showService(name){serviceReturn.value=overlay.value==='product'?'product':'';service.value=name;open('service')}
-const serviceContent={about:{en:'THE WORLD OF SUXU',title:'素，是本真。序，是日常。',text:'我们偏爱有温度的织物、恰到好处的光泽，以及值得留在身边的小物。在这里，可以浏览商家上架的商品并提交预约。'},pickup:{en:'CLICK & COLLECT',title:'自提与送货上门',text:'下单时可选择自提或送货上门。自提请等商家备货后到店领取。送货上门需填写地址和联系方式，每单加收配送费，具体送达时间由商家确认。'},care:{en:'CARE & KEEP',title:'用心佩戴，长久相伴。',text:'织物建议局部轻柔清洁，避免暴晒。首饰避免接触香水、清洁剂，佩戴后擦拭并独立存放。莫桑石并非天然钻石，选购时请确认戒托材质、主石参数和戒围。实际材质与售后约定由主理人确认。'},size:{en:'FIND YOUR PERFECT FIT',title:'适合，才是恰好的美。',text:'戒指请选择你日常佩戴的港码戒围；不确定尺寸时，建议到店试戴并由主理人协助确认。布包与挂件可在自提时查看大小及搭配。具体规格请以商品详情为准。'}}
 function keydown(e){if(e.key==='Escape')close();if(e.key==='Tab'&&overlay.value&&sheet.value){const targets=[...sheet.value.querySelectorAll('button:not(:disabled),a[href],input,select,textarea,[tabindex="0"]')].filter(n=>n.getClientRects().length);if(!targets.length)return;const first=targets[0] as HTMLElement,last=targets.at(-1) as HTMLElement;if(e.shiftKey&&document.activeElement===first){e.preventDefault();last.focus()}else if(!e.shiftKey&&document.activeElement===last){e.preventDefault();first.focus()}}}
 watch(overlay,async(v,old)=>{document.body.style.overflow=v?'hidden':'';if(v&&!old)focusBefore=document.activeElement as HTMLElement;await nextTick();if(v){sheet.value?.scrollTo({top:0});sheet.value?.querySelector<HTMLElement>('button,input')?.focus({preventScroll:true});if(v==='search')searchInput.value?.focus()}else focusBefore?.focus?.({preventScroll:true})})
 onMounted(async()=>{void restoreAccount();try{await refresh()}catch{error.value='暂时无法连接精品店，请稍后重试'}finally{loading.value=false}document.addEventListener('keydown',keydown);interval=setInterval(async()=>{try{await refresh();if(current.value&&overlay.value==='success'){const shown=current.value;const updated=await getOrder(shown);if(current.value===shown)current.value=updated}}catch{error.value='连接暂时中断，正在重试…'}},5000)})
 onUnmounted(()=>{clearInterval(interval);clearTimeout(toastTimer);document.removeEventListener('keydown',keydown);document.body.style.overflow=''})
-return {categoryInfo,categories,visible,products,settings,loading,error,toast,category,sort,search,view,overlay,selected,variant,color,quantity,zoomed,accordion,cart,bagProducts,detailInBag,legacySaved,productSections,history,historyData,historyLoading,historyError,current,account,accountSecure,accountLoading,authError,signIn,saveAccount,logout,checkout,setCheckout,pickupOptions,returnToCheckout,returnToBag,loadOrders,customer,contact,note,pickup,busy,consent,service,fulfillment,address,deliveryRate,deliveryFee,orderStatus,collection,searchInput,sheet,lines,count,subtotal,checkoutCount,checkoutTooLarge,checkoutLines,directLine,eligibleLines,checkedKeys,canRetryOrder,allChecked,someChecked,lineUnavailable,toggleLine,toggleAll,total,unavailable,selectedSKU,statusLabels,year,serviceContent,money,close,open,openProduct,goCollection,runSearch,home,bagHeart,buyNow,changeQuantity,remove,submit,track,openOrders,showService}
+return {categoryInfo,categories,visible,products,settings,loading,error,toast,category,sort,search,view,overlay,selected,variant,color,quantity,accordion,cart,bagProducts,detailInBag,legacySaved,productSections,history,historyData,historyLoading,historyError,current,account,accountSecure,accountLoading,authError,signIn,saveAccount,logout,checkout,setCheckout,pickupOptions,returnToCheckout,returnToBag,loadOrders,customer,contact,note,pickup,busy,consent,fulfillment,address,deliveryRate,deliveryFee,orderStatus,collection,searchInput,sheet,lines,count,subtotal,checkoutCount,checkoutTooLarge,checkoutLines,directLine,eligibleLines,checkedKeys,canRetryOrder,allChecked,someChecked,lineUnavailable,toggleLine,toggleAll,total,unavailable,selectedSKU,statusLabels,year,money,close,open,openProduct,goCollection,runSearch,home,bagHeart,buyNow,changeQuantity,remove,submit,track,openOrders}
 }

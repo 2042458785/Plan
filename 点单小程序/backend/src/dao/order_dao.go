@@ -104,7 +104,7 @@ func (d *OrderDao) Create(ctx context.Context, input m.CreateOrderInput) (m.Orde
 			if updated.RowsAffected != 1 {
 				return api.Problem(409, "库存已变化，请重试")
 			}
-			order.Items = append(order.Items, m.OrderItem{ProductID: p.ID, SKUID: l.SKU.ID, Name: p.Name, Price: p.Price, Quantity: l.Quantity, Variant: l.Variant, Color: l.Color, Image: p.Image})
+			order.Items = append(order.Items, m.OrderItem{ProductID: p.ID, SKUID: l.SKU.ID, Name: p.Name, Price: p.Price, Quantity: l.Quantity, Variant: l.Variant, Color: l.Color, Image: p.ImageForColor(l.Color)})
 			order.Total += p.Price * int64(l.Quantity)
 			if e = tx.Create(&m.StockMovement{SKUID: l.SKU.ID, ProductID: p.ID, OrderID: order.ID, Delta: -l.Quantity, Reason: "order_created", BusinessKey: fmt.Sprintf("reserve:%s:%d:%d", order.ID, l.SKU.ID, i)}).Error; e != nil {
 				return e

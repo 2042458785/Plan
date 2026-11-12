@@ -36,20 +36,22 @@ type CategoryInput struct {
 }
 
 type ProductInput struct {
-	CategoryID  uint       `json:"categoryId"`
-	ID          string     `json:"id"`
-	Category    string     `json:"category"`
-	Name        string     `json:"name"`
-	English     string     `json:"english"`
-	Description string     `json:"description"`
-	Price       int64      `json:"price" binding:"cents"`
-	Image       string     `json:"image"`
-	Available   bool       `json:"available"`
-	Material    string     `json:"material"`
-	Details     string     `json:"details"`
-	Care        *string    `json:"care"`
-	Version     uint64     `json:"version"`
-	SKUs        []SKUInput `json:"skus"`
+	CategoryID  uint                `json:"categoryId"`
+	ID          string              `json:"id"`
+	Category    string              `json:"category"`
+	Name        string              `json:"name"`
+	English     string              `json:"english"`
+	Description string              `json:"description"`
+	Price       int64               `json:"price" binding:"cents"`
+	Image       string              `json:"image"`
+	Gallery     []string            `json:"gallery"`
+	ColorImages map[string][]string `json:"colorImages"`
+	Available   bool                `json:"available"`
+	Material    string              `json:"material"`
+	Details     string              `json:"details"`
+	Care        *string             `json:"care"`
+	Version     uint64              `json:"version"`
+	SKUs        []SKUInput          `json:"skus"`
 }
 type SKUInput struct {
 	ID      uint   `json:"id"`
@@ -64,6 +66,7 @@ type CreateOrderInput struct {
 	Note          string           `json:"note"`
 	Customer      string           `json:"customer"`
 	Contact       string           `json:"contact"`
+	WeChat        *string          `json:"wechat,omitempty"`
 	Pickup        string           `json:"pickup"`
 	Key           string           `json:"key"`
 	Fulfillment   string           `json:"fulfillment,omitempty"`

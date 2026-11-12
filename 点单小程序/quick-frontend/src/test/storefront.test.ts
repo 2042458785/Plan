@@ -135,7 +135,7 @@ it('仅结算勾选的行，未选和缺货商品继续留在购物袋', async (
   await button('继续填写预约').trigger('click')
   expect(wrapper.findAll('.checkout-summary li')).toHaveLength(1)
   await wrapper.get('input[autocomplete="name"]').setValue('组件验收')
-  await wrapper.get('input[placeholder="手机号或微信号"]').setValue('fixture-contact')
+  await wrapper.get('input[name="wechat"]').setValue('fixture-contact')
   await wrapper.get('.pickup-options input[value="明日营业时间内自提"]').setValue(true)
   await wrapper.get('.consent-checkbox input').setValue(true)
   await button('提交预约').trigger('click')
@@ -244,7 +244,7 @@ it('最后一件已售出且原响应丢失时，仍可取回原预约并保留�
   await wrapper.findAll('.s-bag-line input[type="checkbox"]')[0].setValue(true)
   await button('继续填写预约').trigger('click')
   await wrapper.get('input[autocomplete="name"]').setValue('组件验收')
-  await wrapper.get('input[placeholder="手机号或微信号"]').setValue('fixture-contact')
+  await wrapper.get('input[name="wechat"]').setValue('fixture-contact')
   await wrapper.get('.consent-checkbox input').setValue(true)
   await button('提交预约').trigger('click')
   await flushPromises()
@@ -254,4 +254,40 @@ it('最后一件已售出且原响应丢失时，仍可取回原预约并保留�
   await flushPromises()
   expect(wrapper.get('.reservation-id strong').text()).toBe('SU-TEST-001')
   expect(store.state.bag.items).toEqual([unselected])
+})
+
+it('在相册和颜色图之间切换，购物袋和预约采用所选颜色首图', async () => {
+  const catalog = makeCatalog()
+  const product = catalog.products[1]
+  const color = '玫瑰金'
+  product.gallery = ['/api/v1/media/shared-front', '/api/v1/media/shared-detail']
+  product.colors = [...product.colors, color]
+  product.colorImages = { [color]: ['/api/v1/media/rose-front', '/api/v1/media/rose-detail'] }
+  product.skus.push({ ...product.skus.find(sku => sku.variant === '港码 12'), id: 999, color })
+  api.mockResolvedValueOnce(catalog)
+  await render()
+
+  await wrapper.get('button[aria-label="查看初光 · 经典莫桑钻戒"]').trigger('click')
+  const mainImage = () => wrapper.get('.detail-image > img').attributes('src')
+  expect(mainImage()).toBe(product.gallery[0])
+  await wrapper.get('button[aria-label="下一张商品图"]').trigger('click')
+  expect(mainImage()).toBe(product.gallery[1])
+  await wrapper.get('button[aria-label="选择颜色玫瑰金"]').trigger('click')
+  expect(mainImage()).toBe(product.colorImages[color][0])
+  await wrapper.get('button[aria-label="查看商品图 2"]').trigger('click')
+  expect(mainImage()).toBe(product.colorImages[color][1])
+
+  await button('港码 12').trigger('click')
+  await wrapper.get('.detail-title button').trigger('click')
+  await wrapper.get('button[aria-label="关闭窗口"]').trigger('click')
+  await wrapper.get('button[aria-label="打开购物袋"]').trigger('click')
+  expect(wrapper.get('.bag-line-image img').attributes('src')).toBe(product.colorImages[color][0])
+  await wrapper.get('.s-bag-line input[type=checkbox]').setValue(true)
+  await button('继续填写预约').trigger('click')
+  expect(wrapper.get('.checkout-summary img').attributes('src')).toBe(product.colorImages[color][0])
+
+  await wrapper.get('button[aria-label="关闭窗口"]').trigger('click')
+  await wrapper.get('button[aria-label="查看云游 · 弧形帆布包"]').trigger('click')
+  expect(wrapper.get('.detail-image > img').attributes('src')).toContain('/images/')
+  expect(wrapper.find('.gallery-thumbnails').exists()).toBe(false)
 })
