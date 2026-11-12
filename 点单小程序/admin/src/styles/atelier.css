@@ -126,3 +126,82 @@
   .product-photos { padding: 10px; }
   .product-editor .el-dialog__footer { padding-bottom: max(10px, env(safe-area-inset-bottom)); }
 }
+
+:root {
+  --control-text: #4b4434;
+  --control-border: #d7ccb7;
+  --control-focus: #746345;
+}
+.el-input__inner, .el-textarea__inner {
+  min-height: 44px;
+  border-color: var(--control-border);
+  border-radius: 10px;
+  color: var(--control-text);
+  font-size: 16px;
+}
+.el-input__inner::placeholder, .el-textarea__inner::placeholder { color: #756c5c; font-size: 14px; }
+.el-form--label-top .el-form-item__label { color: #554a37; font-size: 14px; line-height: 1.45; padding-bottom: 8px; }
+.el-input__inner:focus, .el-textarea__inner:focus { border-color: var(--control-focus); box-shadow: 0 0 0 2px #77634529; }
+.el-button { min-height: 44px; border-radius: 10px; font-size: 13px; }
+.el-button--text { color: #615234; }
+.el-button:focus-visible, .atelier-sidebar a:focus-visible, .photo-tile-actions button:focus-visible,
+.photo-link:focus-visible, .color-photo-group summary:focus-visible { outline: 2px solid var(--control-focus); outline-offset: 2px; }
+.heading-actions .el-button + .el-button { margin-left: 0; }
+.order-toolbar .el-radio-group { display: flex; flex-wrap: wrap; gap: 6px; min-width: 0; }
+.order-toolbar .el-radio-button__inner,
+.qr-dialog .el-radio-button__inner {
+  min-height: 44px; display: inline-flex; align-items: center; padding: 8px 11px; border: 1px solid var(--control-border) !important;
+  border-radius: 9px !important; box-shadow: none !important; color: var(--control-text); font-size: 13px;
+}
+.order-toolbar .el-radio-button__orig-radio:checked + .el-radio-button__inner,
+.qr-dialog .el-radio-button__orig-radio:checked + .el-radio-button__inner {
+  color: #fffdf4; background: #4f503b; border-color: #4f503b !important;
+}
+.order-toolbar .el-radio-button:focus-visible .el-radio-button__inner,
+.qr-dialog .el-radio-button:focus-visible .el-radio-button__inner { outline: 2px solid var(--control-focus); outline-offset: 2px; }
+.order-toolbar .el-input { width: min(100%, 280px); min-width: 0; flex: 0 1 280px; }
+.reservation-card { min-width: 0; }
+.reservation-card header > div, .reservation-items > div > span, .reservation-meta > span, .reservation-note { min-width: 0; overflow-wrap: anywhere; }
+.reservation-card .el-tag { flex: 0 0 auto; }
+.reservation-actions { flex-wrap: wrap; }
+.reservation-actions .el-button { margin: 0; white-space: normal; line-height: 1.4; }
+.pagination-row .el-pagination { white-space: normal; }
+.qr-dialog.el-dialog, .category-editor.el-dialog {
+  max-width: calc(100% - 24px); max-height: calc(100dvh - 24px);
+  margin: 12px auto !important; overflow-y: auto; border-radius: 16px;
+}
+.qr-dialog .qr-image { height: auto; aspect-ratio: 1; }
+.qr-dialog .el-radio-group { display: flex; flex-wrap: wrap; justify-content: center; gap: 6px; }
+.qr-dialog .dialog-actions, .el-message-box__btns { flex-wrap: wrap; }
+.el-message-box { border-radius: 16px; }
+.el-message { width: max-content; min-width: min(260px, calc(100vw - 24px)); max-width: calc(100vw - 24px); }
+.el-message__content { overflow-wrap: anywhere; line-height: 1.5; }
+.merchant-login-form .el-input__inner { height: 46px; line-height: 46px; font-size: 16px; }
+.overview-panel { min-width: 0; }
+.ranking strong { overflow-wrap: anywhere; }
+
+@media (max-width: 800px) {
+  .order-toolbar .el-input { flex: 0 0 auto; width: 100%; }
+}
+@media (max-width: 640px) {
+  .atelier-sidebar { flex-wrap: wrap; row-gap: 4px; }
+  .atelier-sidebar nav { flex: 1 0 100%; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); }
+  .atelier-sidebar nav > a { min-height: 44px; justify-content: center; text-align: center; white-space: normal; border-radius: 8px; font-size: 12px; padding: 4px; }
+  .atelier-top .mobile-signout { min-height: 44px; font-size: 12px; }
+  .merchant-login .login-editorial { min-height: 0; padding: 19px 23px; }
+  .merchant-login .login-wordmark { margin: 0; font-size: 25px; }
+  .merchant-login .login-editorial > :not(.login-wordmark) { display: none; }
+  .merchant-login .login-side { padding: 30px 23px; }
+  .inventory-actions .el-button, .category-row .el-button { min-width: 40px; padding-inline: 4px; }
+}
+
+.metric-grid article, .reservation-card { border-radius: 12px; }
+.metric-grid article > span, .metric-grid article > p { color: #6e6048; }
+.metric-grid article > strong { overflow-wrap: anywhere; }
+@media (max-width: 640px) {
+  .metric-grid { gap: 9px; margin-bottom: 16px; }
+  .metric-grid article { min-height: 104px; padding: 13px 14px; }
+  .metric-grid article > strong { margin: 7px 0 3px; line-height: 1.2; }
+  .metric-grid article > p { font-size: 11px; line-height: 1.4; }
+  .page-heading { gap: 12px; margin-bottom: 19px; }
+}

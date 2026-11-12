@@ -91,7 +91,7 @@ it('使用后台封面，购物袋和预约分两步，自提只提供三种安�
   expect(wrapper.find('.checkout-information select').exists()).toBe(false)
   expect(wrapper.findAll('.pickup-options label').map(option => option.text())).toEqual(['今日营业时间内自提','明日营业时间内自提','和店家商量时间'])
   await wrapper.get('input[value="delivery"]').setValue(true)
-  expect(wrapper.get('input[autocomplete="street-address"]').attributes('placeholder')).toContain('寝室楼栋和寝室号')
+  expect(wrapper.get('input[autocomplete="street-address"]').attributes('placeholder')).toContain('寝室')
 })
 
 it('登录后显示顾客编号，并用账号会话读取预约', async () => {

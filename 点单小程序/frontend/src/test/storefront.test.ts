@@ -112,7 +112,10 @@ it('送货上门需要微信号和地址，整单加 2 元', async () => {
   await button('提交预约').trigger('click')
   expect(api.mock.calls.some(c => c[0] === '/orders')).toBe(false)
   expect(wrapper.text()).toContain('请留意并通过商家的微信好友申请')
+  expect(wrapper.get('input[name="wechat"]').attributes('aria-invalid')).toBe('true')
+  expect(wrapper.get('#checkout-wechat-error').text()).toContain('微信号')
   await wrapper.get('input[name="wechat"]').setValue('test_wechat_01')
+  expect(wrapper.find('#checkout-wechat-error').exists()).toBe(false)
   await button('提交预约').trigger('click')
   await flushPromises()
   const request = api.mock.calls.find(c => c[0] === '/orders')!

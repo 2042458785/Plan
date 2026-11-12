@@ -56,7 +56,7 @@ func (c *CatalogController) SaveSettings(ctx *gin.Context) {
 }
 
 func (c *CatalogController) Dashboard(ctx *gin.Context) {
-	out, e := c.Service.Dashboard(ctx.Request.Context())
+	out, e := c.Service.Dashboard(ctx.Request.Context(), ctx.Query("summary") == "1")
 	if e != nil {
 		api.RespondError(ctx, e)
 		return

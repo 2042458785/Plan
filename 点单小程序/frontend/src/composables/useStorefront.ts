@@ -20,6 +20,11 @@ const wechatID = /^[A-Za-z][A-Za-z0-9_-]{5,19}$/
 const pickupOptions = ['今日营业时间内自提', '明日营业时间内自提', '和店家商量时间']
 const { account, secure: accountSecure, loading: accountLoading, authError, signedIn, request: accountRequest, restore: restoreAccount, authenticate, save: saveAccount, logout } = useCustomer(notify)
 let interval,toastTimer;let focusBefore:HTMLElement|null=null
+let catalogRequest: Promise<void> | null = null
+let polling = false
+let disposed = false
+type CheckoutField = 'customer' | 'wechat' | 'address' | 'consent'
+const checkoutError = ref<{ field: CheckoutField; message: string } | null>(null)
 function load(k,d){try{return JSON.parse(localStorage.getItem(k))??d}catch{return d}}
 function persist(k,v){try{k==='suxu-bag-v1'?store.commit('bag/setItems',JSON.parse(JSON.stringify(v))):k==='suxu-favorites-v1'?store.commit('wishlist/setIds',[...v]):localStorage.setItem(k,JSON.stringify(v))}catch{notify('浏览器存储不可用，请保留本次订单页面')}}
 const money=n=>new Intl.NumberFormat('zh-CN',{maximumFractionDigits:2}).format(n/100)
@@ -78,6 +83,9 @@ const subtotal = computed(() => checkoutLines.value.reduce((n, line) => n + line
 const deliveryFee = computed(() => checkoutCount.value && fulfillment.value === 'delivery' ? deliveryRate.value : 0)
 const total = computed(() => subtotal.value + deliveryFee.value)
 const selectedSKU=computed(()=>selected.value?.skus?.find(s=>s.variant===variant.value&&s.color===color.value))
+watch(() => selectedSKU.value?.stock, stock => {
+  quantity.value = Math.min(quantity.value, Math.max(1, Math.min(stock ?? 0, 50)))
+})
 const detailInBag = computed(() => variant.value && color.value
   ? lines.value.some(line => line.productId === selectedId.value && line.variant === variant.value && line.color === color.value)
   : bagProducts.value.has(selectedId.value))
@@ -106,8 +114,16 @@ function updateTitle() {
   document.title = settings.value.name + ' · 日常之上，自有光芒'
 }
 
-async function refresh() {
+function refresh() {
+  if (!catalogRequest) {
+    catalogRequest = loadCatalog().finally(() => { catalogRequest = null })
+  }
+  return catalogRequest
+}
+
+async function loadCatalog() {
   const catalog = await api('/catalog')
+  if (disposed) return
   const activeCategory = catalogCategories.value.find(item => item.name === category.value)
   catalogCategories.value = catalog.categories
   if (activeCategory) category.value = catalogCategories.value.find(item => item.id === activeCategory.id)?.name ?? '全部商品'
@@ -147,6 +163,7 @@ function setCheckout(value: boolean) {
     return
   }
   checkout.value = value
+  checkoutError.value = null
   toast.value = ''
   consent.value = false
   if (value) fillFromAccount()
@@ -262,6 +279,17 @@ function remove(line: BagLine) {
   checkedKeys.value.delete(line.key)
   persist('suxu-bag-v1', cart.value.filter(item => item.key !== line.key))
 }
+function invalidCheckout(field: CheckoutField, message: string) {
+  checkoutError.value = { field, message }
+  const control = sheet.value?.querySelector<HTMLElement>(`[name="${field}"]`)
+  control?.focus({ preventScroll: true })
+  control?.scrollIntoView({ block: 'center' })
+}
+watch(customer, () => { if (checkoutError.value?.field === 'customer') checkoutError.value = null })
+watch(contact, () => { if (checkoutError.value?.field === 'wechat') checkoutError.value = null })
+watch([address, fulfillment], () => { if (checkoutError.value?.field === 'address') checkoutError.value = null })
+watch(consent, checked => { if (checked && checkoutError.value?.field === 'consent') checkoutError.value = null })
+
 async function submit() {
   if (busy.value) return
   if (canRetryOrder.value && pendingOrder.value) {
@@ -269,14 +297,14 @@ async function submit() {
     return
   }
   if (checkoutTooLarge.value || unavailable.value || !settings.value.open || !checkoutLines.value.length) return
-  if (!customer.value.trim()) { notify('请填写联系人称呼'); return }
+  if (!customer.value.trim()) { invalidCheckout('customer', '请填写联系人称呼'); return }
   const delivering = fulfillment.value === 'delivery'
-  if (!wechatID.test(contact.value.trim())) { notify('请填写有效的微信号，以字母开头，6–20 位'); return }
+  if (!wechatID.test(contact.value.trim())) { invalidCheckout('wechat', '请输入 6–20 位微信号，以字母开头'); return }
   if (delivering && !address.value.trim()) {
-    notify('请填写寝室楼栋和寝室号')
+    invalidCheckout('address', '请填写寝室楼栋和寝室号')
     return
   }
-  if (!consent.value) { notify('请确认取货和付款方式'); return }
+  if (!consent.value) { invalidCheckout('consent', '请确认取货安排'); return }
 
   const submitted = checkoutLines.value
   const payload = {
@@ -303,6 +331,7 @@ async function submit() {
 
 async function sendOrder(attempt: PendingOrder) {
   busy.value = true
+  checkoutError.value = null
   toast.value = ''
   ;(document.activeElement as HTMLElement | null)?.blur()
   try {
@@ -338,7 +367,8 @@ async function sendOrder(attempt: PendingOrder) {
   } finally {
     busy.value = false
   }
-  await refresh().catch(() => {})
+  await catalogRequest?.catch(() => {})
+  if (!disposed) await refresh().catch(() => {})
 }
 async function getOrder(order) {
   return order.token
@@ -406,9 +436,64 @@ watch(signedIn, (active, wasActive) => {
 })
 function showService(name){service.value=name;open('service')}
 const serviceContent={about:{en:'THE WORLD OF SUXU',title:'素，是本真。序，是日常。',text:'我们偏爱有温度的织物、恰到好处的光泽，以及值得留在身边的小物。在这里，可以浏览商家上架的商品并提交预约。'},pickup:{en:'CLICK & COLLECT',title:'自提与送货上门',text:'下单时可选择自提或送货上门。自提请等商家备货后到店领取。送货上门需填写地址和联系方式，每单加收配送费，具体送达时间由商家确认。'},care:{en:'CARE & KEEP',title:'用心佩戴，长久相伴。',text:'织物建议局部轻柔清洁，避免暴晒。首饰避免接触香水、清洁剂，佩戴后擦拭并独立存放。莫桑石并非天然钻石，选购时请确认戒托材质、主石参数和戒围。实际材质与售后约定由主理人确认。'}}
-function keydown(e){if(e.key==='Escape')close();if(e.key==='Tab'&&overlay.value&&sheet.value){const targets=[...sheet.value.querySelectorAll('button:not(:disabled),a[href],input,select,textarea,[tabindex="0"]')].filter(n=>n.getClientRects().length);if(!targets.length)return;const first=targets[0] as HTMLElement,last=targets.at(-1) as HTMLElement;if(e.shiftKey&&document.activeElement===first){e.preventDefault();last.focus()}else if(!e.shiftKey&&document.activeElement===last){e.preventDefault();first.focus()}}}
+function keydown(event: KeyboardEvent) {
+  if (!overlay.value || !sheet.value) return
+  if (event.key === 'Escape') {
+    close()
+    return
+  }
+  if (event.key !== 'Tab') return
+  const focusable = [...sheet.value.querySelectorAll<HTMLElement>('button, a[href], input, textarea, [tabindex="0"]')]
+    .filter(control => !control.matches(':disabled') && control.tabIndex >= 0 && control.getClientRects().length)
+  const first = focusable[0]
+  const last = focusable.at(-1)
+  if (!first || !last) return
+  const active = document.activeElement
+  if (!sheet.value.contains(active) || active === (event.shiftKey ? first : last)) {
+    event.preventDefault()
+    ;(event.shiftKey ? last : first).focus()
+  }
+}
 watch(overlay,async(v,old)=>{document.body.style.overflow=v?'hidden':'';if(v&&!old)focusBefore=document.activeElement as HTMLElement;await nextTick();if(v){sheet.value?.scrollTo({top:0});sheet.value?.querySelector<HTMLElement>('button,input')?.focus({preventScroll:true});if(v==='search')searchInput.value?.focus()}else focusBefore?.focus?.({preventScroll:true})})
-onMounted(async()=>{void restoreAccount();try{await refresh()}catch{error.value='暂时无法连接精品店，请稍后重试'}finally{loading.value=false}document.addEventListener('keydown',keydown);interval=setInterval(async()=>{try{await refresh();if(current.value&&overlay.value==='success'){const shown=current.value;const updated=await getOrder(shown);if(current.value===shown)current.value=updated}}catch{error.value='连接暂时中断，正在重试…'}},5000)})
-onUnmounted(()=>{clearInterval(interval);clearTimeout(toastTimer);document.removeEventListener('keydown',keydown);document.body.style.overflow=''})
-return {categoryInfo,categories,visible,products,settings,loading,error,toast,category,sort,search,view,overlay,selected,variant,color,quantity,accordion,cart,bagProducts,detailInBag,legacySaved,productSections,history,historyData,historyLoading,historyError,current,account,accountSecure,accountLoading,authError,signIn,saveAccount,logout,checkout,setCheckout,pickupOptions,returnToCheckout,returnToBag,loadOrders,customer,contact,note,pickup,busy,consent,service,fulfillment,address,deliveryRate,deliveryFee,orderStatus,collection,searchInput,sheet,lines,count,subtotal,checkoutCount,checkoutTooLarge,checkoutLines,directLine,eligibleLines,checkedKeys,canRetryOrder,allChecked,someChecked,lineUnavailable,toggleLine,toggleAll,total,unavailable,selectedSKU,statusLabels,year,serviceContent,money,close,open,openProduct,goCollection,runSearch,home,bagHeart,buyNow,changeQuantity,remove,submit,track,openOrders,showService}
+async function pollVisible() {
+  if (document.hidden || disposed || polling || busy.value) return
+  polling = true
+  try {
+    await refresh()
+    if (!disposed && current.value && overlay.value === 'success') {
+      const shown = current.value
+      const updated = await getOrder(shown).catch(() => null)
+      if (!disposed && updated && current.value === shown) current.value = updated
+    }
+  } catch {
+    if (!disposed) error.value = '连接暂时中断，正在重试…'
+  } finally {
+    polling = false
+  }
+}
+
+onMounted(async () => {
+  document.addEventListener('keydown', keydown)
+  document.addEventListener('visibilitychange', pollVisible)
+  void restoreAccount()
+  try {
+    await refresh()
+  } catch {
+    if (!disposed) error.value = '暂时无法连接精品店，请稍后重试'
+  } finally {
+    if (!disposed) {
+      loading.value = false
+      interval = setInterval(pollVisible, 5000)
+    }
+  }
+})
+onUnmounted(() => {
+  disposed = true
+  clearInterval(interval)
+  clearTimeout(toastTimer)
+  document.removeEventListener('keydown', keydown)
+  document.removeEventListener('visibilitychange', pollVisible)
+  document.body.style.overflow = ''
+})
+return {categoryInfo,categories,visible,products,settings,loading,error,toast,category,sort,search,view,overlay,selected,variant,color,quantity,accordion,cart,bagProducts,detailInBag,legacySaved,productSections,history,historyData,historyLoading,historyError,current,account,accountSecure,accountLoading,authError,signIn,saveAccount,logout,checkout,setCheckout,pickupOptions,returnToCheckout,returnToBag,loadOrders,customer,contact,checkoutError,note,pickup,busy,consent,service,fulfillment,address,deliveryRate,deliveryFee,orderStatus,collection,searchInput,sheet,lines,count,subtotal,checkoutCount,checkoutTooLarge,checkoutLines,directLine,eligibleLines,checkedKeys,canRetryOrder,allChecked,someChecked,lineUnavailable,toggleLine,toggleAll,total,unavailable,selectedSKU,statusLabels,year,serviceContent,money,close,open,openProduct,goCollection,runSearch,home,bagHeart,buyNow,changeQuantity,remove,submit,track,openOrders,showService}
 }

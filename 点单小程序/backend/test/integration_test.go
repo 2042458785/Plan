@@ -614,6 +614,18 @@ func TestCatalogAndDeliveryIntegration(t *testing.T) {
 	if w := call(f.router, "PUT", productPath, noImages, token, ""); w.Code != 400 {
 		t.Fatal("允许保存无任何图片的商品")
 	}
+	var summary, dashboard struct {
+		TodayOrders int64
+		Pending     int64
+		Revenue     int64
+		Ranking     []struct{ Sold int64 }
+	}
+	decode(t, call(f.router, "GET", admin+"/dashboard?summary=1", nil, token, ""), &summary)
+	decode(t, call(f.router, "GET", admin+"/dashboard", nil, token, ""), &dashboard)
+	if summary.TodayOrders != 1 || summary.Pending != 1 || summary.Revenue != 0 || summary.Ranking != nil ||
+		dashboard.TodayOrders != summary.TodayOrders || dashboard.Pending != summary.Pending || len(dashboard.Ranking) != 1 || dashboard.Ranking[0].Sold != 2 {
+		t.Fatalf("工作台摘要和完整概览统计不一致: summary=%+v dashboard=%+v", summary, dashboard)
+	}
 	decode(t, call(f.router, "DELETE", categoryPath, nil, token, ""), nil)
 	decode(t, call(f.router, "GET", public, nil, "", ""), &catalog)
 	if len(catalog.Categories)+len(catalog.Products) != 0 {

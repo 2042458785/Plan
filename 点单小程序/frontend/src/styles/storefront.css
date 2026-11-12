@@ -196,3 +196,29 @@
 @media (max-width: 760px) {
   .detail-gallery .detail-image { height: clamp(200px, 48dvh, 440px); }
 }
+
+.boutique :is(button, a, input, textarea):focus-visible { outline: 2px solid #776240; outline-offset: 3px; }
+.boutique .checkout-field-error {
+  display: block; margin: 7px 0 0; color: #9b3f33; font-size: 13px; line-height: 1.45;
+}
+.checkout-information input[aria-invalid="true"] { border-color: #ad5949; background: #fff7f1; }
+.bag-checkout > .checkout-field-error { margin: 0 0 12px; }
+.boutique .checkout-information label, .boutique .checkout-account button { font-size: 14px; }
+.boutique .checkout-information textarea, .boutique .account-form input { border-radius: 12px; }
+.boutique .checkout-information textarea { resize: vertical; }
+.boutique .account-tabs button { border-radius: 10px; font-size: 14px; }
+.boutique .account-form .s-primary { min-height: 44px; width: 100%; }
+.boutique .checkout-back, .boutique .consent-checkbox { min-height: 44px; }
+.boutique .checkout-back { line-height: 1.5; }
+.boutique .bag-check, .boutique .consent-checkbox { touch-action: manipulation; }
+.boutique .sheet-close { min-width: 44px; min-height: 44px; }
+.boutique .s-stepper button { min-width: 36px; min-height: 36px; }
+.boutique .s-stepper { min-height: 38px; }
+.boutique .s-search-form input { min-width: 0; }
+.boutique .s-search-form button { min-height: 44px; }
+.boutique .s-toast { width: max-content; max-width: calc(100vw - 28px); overflow-wrap: anywhere; }
+@media (max-width: 760px) {
+  .boutique .s-sheet { padding-bottom: max(24px, env(safe-area-inset-bottom)); }
+  .boutique .s-product-sheet { padding-bottom: env(safe-area-inset-bottom); }
+  .boutique .mobile-bottom-nav button { min-height: 44px; }
+}

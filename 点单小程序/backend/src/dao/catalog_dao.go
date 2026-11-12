@@ -204,23 +204,30 @@ func (d *CatalogDao) SaveSettings(ctx context.Context, input m.ShopSetting, admi
 	return input, e
 }
 
-func (d *CatalogDao) Dashboard(ctx context.Context) (map[string]any, error) {
+func (d *CatalogDao) Dashboard(ctx context.Context, summaryOnly bool) (map[string]any, error) {
 	now := time.Now()
 	start := time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, now.Location())
 	end := start.AddDate(0, 0, 1)
-	var revenue int64
-	var today, pending, confirmed int64
-	if e := d.Orm.WithContext(ctx).Model(&m.Order{}).Where("created_at >= ? AND created_at < ? AND paid = ? AND status <> ?", start, end, true, "cancelled").Select("COALESCE(SUM(total),0)").Scan(&revenue).Error; e != nil {
-		return nil, e
+	var metrics struct {
+		Revenue     int64
+		TodayOrders int64
+		Pending     int64
+		Confirmed   int64
 	}
-	if e := d.Orm.WithContext(ctx).Model(&m.Order{}).Where("created_at >= ? AND created_at < ?", start, end).Count(&today).Error; e != nil {
-		return nil, e
+	inDay := "created_at >= ? AND created_at < ?"
+	query := d.Orm.WithContext(ctx).Model(&m.Order{}).
+		Where("("+inDay+") OR status IN ?", start, end, []string{"pending", "confirmed"}).
+		Select("COALESCE(SUM(CASE WHEN "+inDay+" AND paid = ? AND status <> ? THEN total ELSE 0 END), 0) AS revenue, "+
+			"COUNT(CASE WHEN "+inDay+" THEN 1 END) AS today_orders, "+
+			"COUNT(CASE WHEN status = ? THEN 1 END) AS pending, "+
+			"COUNT(CASE WHEN status = ? THEN 1 END) AS confirmed",
+			start, end, true, "cancelled", start, end, "pending", "confirmed")
+	if err := query.Scan(&metrics).Error; err != nil {
+		return nil, err
 	}
-	if e := d.Orm.WithContext(ctx).Model(&m.Order{}).Where("status = ?", "pending").Count(&pending).Error; e != nil {
-		return nil, e
-	}
-	if e := d.Orm.WithContext(ctx).Model(&m.Order{}).Where("status = ?", "confirmed").Count(&confirmed).Error; e != nil {
-		return nil, e
+	result := map[string]any{"revenue": metrics.Revenue, "todayOrders": metrics.TodayOrders, "pending": metrics.Pending, "confirmed": metrics.Confirmed}
+	if summaryOnly {
+		return result, nil
 	}
 	type sale struct {
 		ProductID string
@@ -234,16 +241,17 @@ func (d *CatalogDao) Dashboard(ctx context.Context) (map[string]any, error) {
 	for _, v := range sales {
 		counts[v.ProductID] = v.Sold
 	}
-	products, _, _, e := d.Catalog(ctx, true)
-	if e != nil {
-		return nil, e
+	var products []m.Product
+	if err := d.Orm.WithContext(ctx).Select("id", "name", "image").Order("position ASC, id ASC").Find(&products).Error; err != nil {
+		return nil, err
 	}
 	ranking := make([]map[string]any, 0, len(products))
 	for _, p := range products {
 		ranking = append(ranking, map[string]any{"id": p.ID, "name": p.Name, "image": p.Image, "sold": counts[p.ID]})
 	}
 	sort.SliceStable(ranking, func(i, j int) bool { return ranking[i]["sold"].(int64) > ranking[j]["sold"].(int64) })
-	return map[string]any{"revenue": revenue, "todayOrders": today, "pending": pending, "confirmed": confirmed, "ranking": ranking}, nil
+	result["ranking"] = ranking
+	return result, nil
 }
 
 func (d *CatalogDao) CreateImage(ctx context.Context, image *m.ProductImage) error {

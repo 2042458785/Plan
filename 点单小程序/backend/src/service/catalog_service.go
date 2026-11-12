@@ -59,8 +59,8 @@ func (s *CatalogService) SaveSettings(ctx context.Context, v m.ShopSetting, admi
 	return s.Dao.SaveSettings(ctx, v, adminID)
 }
 
-func (s *CatalogService) Dashboard(ctx context.Context) (map[string]any, error) {
-	return s.Dao.Dashboard(ctx)
+func (s *CatalogService) Dashboard(ctx context.Context, summaryOnly bool) (map[string]any, error) {
+	return s.Dao.Dashboard(ctx, summaryOnly)
 }
 
 func (s *CatalogService) SaveCategory(ctx context.Context, id uint, name string, adminID uint) (m.Category, error) {
