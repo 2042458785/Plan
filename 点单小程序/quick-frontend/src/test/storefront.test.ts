@@ -71,10 +71,19 @@ it('空商城没有固定分类，后台新建的空分类也可以选择', asyn
   expect(wrapper.get('.quick-listing h2').text()).toBe('已改名')
 })
 
-it('使用后台保存的快速商城封面', async () => {
+it('使用后台封面，购物袋和预约分两步', async () => {
   const catalog = makeCatalog()
   catalog.settings.quickCover = '/api/v1/media/fixture'
   api.mockResolvedValueOnce(catalog)
   await render()
   expect(wrapper.get('.quick-cover img').attributes('src')).toBe('/api/v1/media/fixture')
+  await wrapper.get('button[aria-label="查看初光 · 经典莫桑钻戒"]').trigger('click')
+  await button('港码 12').trigger('click')
+  await wrapper.get('.detail-title button').trigger('click')
+  expect(store.state.bag.items[0].productId).toBe('p2')
+  await wrapper.get('button[aria-label="关闭窗口"]').trigger('click')
+  await wrapper.get('button[aria-label="打开购物袋"]').trigger('click')
+  expect(wrapper.find('.checkout-information').exists()).toBe(false)
+  await button('继续填写预约').trigger('click')
+  expect(wrapper.find('.checkout-information').exists()).toBe(true)
 })
