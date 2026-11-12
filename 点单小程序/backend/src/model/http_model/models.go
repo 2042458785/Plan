@@ -36,6 +36,7 @@ type ProductSKU struct {
 	UpdatedAt time.Time `json:"updatedAt"`
 }
 type ShopSetting struct {
+	QuickCover   string    `gorm:"size:1000;not null;default:''" json:"quickCover"`
 	ID           uint      `gorm:"primaryKey" json:"-"`
 	Name         string    `gorm:"size:100" json:"name"`
 	Announcement string    `gorm:"size:1000" json:"announcement"`

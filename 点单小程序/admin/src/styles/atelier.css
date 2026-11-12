@@ -18,3 +18,6 @@
 .product-file-input { display: none; }
 .optional-product-fields { margin: 16px 0; }
 .category-editor { max-width: calc(100vw - 28px); }
+
+.settings-cover-preview { max-width: 480px; aspect-ratio: 2 / 1; margin-bottom: 10px; background: #eee9dc; overflow: hidden; }
+.settings-cover-preview img { width: 100%; height: 100%; object-fit: cover; }

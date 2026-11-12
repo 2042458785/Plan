@@ -84,6 +84,8 @@ npm run serve
 
 项目根目录的 `./start.sh` 可启动后端、原版商城和商家后台。快速前台在自己的目录运行 `npm run serve`。
 
+后台「店铺设置」可上传或恢复快速小程序封面。
+
 ## 数据库结构
 
 采用参考工程的 `sys_` 前缀与单数表名，持久化实际业务行，不再使用 `snapshots`：
@@ -94,7 +96,7 @@ npm run serve
 | `sys_product` | 商品资料与版本号 |
 | `sys_product_sku` | 规格、颜色、独立库存与版本号 |
 | `sys_product_image` | 后台上传的商品图片 |
-| `sys_shop_setting` | 店铺信息与预约开关 |
+| `sys_shop_setting` | 店铺信息、封面与预约开关 |
 | `sys_order` | 预约、顾客资料、金额、状态、查询凭证和幂等信息 |
 | `sys_order_item` | 下单时的商品、价格、规格、颜色快照 |
 | `sys_stock_movement` | 初始库存、人工调整、预约扣减、取消返还流水 |

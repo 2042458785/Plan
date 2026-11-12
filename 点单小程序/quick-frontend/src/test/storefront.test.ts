@@ -70,3 +70,11 @@ it('空商城没有固定分类，后台新建的空分类也可以选择', asyn
   await flushPromises()
   expect(wrapper.get('.quick-listing h2').text()).toBe('已改名')
 })
+
+it('使用后台保存的快速商城封面', async () => {
+  const catalog = makeCatalog()
+  catalog.settings.quickCover = '/api/v1/media/fixture'
+  api.mockResolvedValueOnce(catalog)
+  await render()
+  expect(wrapper.get('.quick-cover img').attributes('src')).toBe('/api/v1/media/fixture')
+})

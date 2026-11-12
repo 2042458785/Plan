@@ -559,3 +559,19 @@ func TestCatalogAndDeliveryIntegration(t *testing.T) {
 		t.Fatal("历史订单图片丢失")
 	}
 }
+
+func TestQuickCoverIntegration(t *testing.T) {
+	if os.Getenv("RUN_MYSQL_TESTS") != "1" {
+		t.Skip("需要临时 MySQL 实例")
+	}
+	f := setup(t)
+	adminToken := login(t, f)
+	var catalog struct{ Settings m.ShopSetting }
+	decode(t, call(f.router, "GET", "/api/v1/admin/catalog", nil, adminToken, ""), &catalog)
+	catalog.Settings.QuickCover = "/images/bag.jpg"
+	decode(t, call(f.router, "PUT", "/api/v1/admin/settings", catalog.Settings, adminToken, ""), nil)
+	decode(t, call(f.router, "GET", "/api/v1/catalog", nil, "", ""), &catalog)
+	if catalog.Settings.QuickCover != "/images/bag.jpg" {
+		t.Fatal("快速商城未获得已保存的封面")
+	}
+}

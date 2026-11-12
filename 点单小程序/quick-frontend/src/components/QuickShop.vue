@@ -20,6 +20,11 @@ const emit = defineEmits<{
 }>()
 
 const catalog = ref<HTMLElement | null>(null)
+const defaultCover = assetUrl('/images/hero.jpg')
+function restoreCover(event: Event) {
+  const image = event.currentTarget as HTMLImageElement
+  if (image.getAttribute('src') !== defaultCover) image.src = defaultCover
+}
 const quickHome = import.meta.env.BASE_URL
 const price = new Intl.NumberFormat('zh-CN', { maximumFractionDigits: 2 })
 
@@ -55,7 +60,7 @@ function selectCategory(name: string) {
 
     <main class="quick-main">
       <section class="quick-cover" aria-labelledby="quick-title">
-        <img :src="assetUrl('/images/hero.jpg')" alt="" fetchpriority="high" />
+        <img :src="assetUrl(settings.quickCover || '/images/hero.jpg')" alt="" fetchpriority="high" @error="restoreCover" />
         <div class="quick-cover-shade"></div>
         <div class="quick-cover-copy">
           <span class="quick-kicker">SUXU / THE QUICK EDIT</span>
