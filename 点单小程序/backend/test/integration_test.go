@@ -217,17 +217,35 @@ func TestMySQLIntegration(t *testing.T) {
 		f := setup(t)
 		token := login(t, f)
 		input := m.ProductInput{Category: "首饰", Name: "验收专用首饰", Price: 19901, Image: "/images/jewelry.jpg", Available: true, SKUs: []m.SKUInput{{Variant: "标准款", Color: "香槟金", Stock: 5}}}
+		details, care := "商家填写的商品细节", "避免受潮\n单独收纳"
+		input.Details, input.Material, input.Care = details, "合成材质", &care
 		var product m.ProductView
 		decode(t, call(f.router, "PUT", "/api/v1/admin/products/new", input, token, ""), &product)
 		if product.ID == "" || product.Stock != 5 || product.Price != 19901 {
 			t.Fatal("商品或规格未准确落库")
 		}
+		if product.Care != care || product.Details != details || product.Material != input.Material {
+			t.Fatal("材质、养护与细节没有独立保存")
+		}
+		input.Care = nil // 老版管理端没有养护字段。
 		input.Version = product.Version
 		input.Price = 20909
 		input.SKUs[0].Stock = 7
 		decode(t, call(f.router, "PUT", "/api/v1/admin/products/"+product.ID, input, token, ""), &product)
 		if product.Stock != 7 || product.Price != 20909 {
 			t.Fatal("商品编辑未持久化")
+		}
+		var publicCatalog struct{ Products []m.ProductView }
+		decode(t, call(f.router, "GET", "/api/v1/catalog", nil, "", ""), &publicCatalog)
+		found := false
+		for _, item := range publicCatalog.Products {
+			if item.ID == product.ID {
+				found = item.Care == care && item.Material == input.Material && item.Details == details
+				break
+			}
+		}
+		if !found {
+			t.Fatal("公开商品详情未保留后台资料或旧客户端覆盖了养护字段")
 		}
 		var catalog struct {
 			Settings m.ShopSetting `json:"settings"`

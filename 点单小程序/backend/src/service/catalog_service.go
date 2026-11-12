@@ -19,7 +19,7 @@ func (s *CatalogService) Catalog(ctx context.Context, admin bool) (map[string]an
 func (s *CatalogService) SaveProduct(ctx context.Context, id string, p m.ProductInput, adminID uint) (m.ProductView, error) {
 	p.Name = strings.TrimSpace(p.Name)
 	p.Category = strings.TrimSpace(p.Category)
-	if p.Name == "" || len(p.Name) > 100 || (p.CategoryID == 0 && p.Category == "") || len(p.Category) > 240 || p.Price < 1 || p.Price > 1000000 || len(p.Description) > 500 || len(p.Material) > 300 || len(p.Details) > 3000 || len(p.English) > 200 || len(p.Image) > 1000 || len(p.SKUs) < 1 || len(p.SKUs) > 120 {
+	if p.Name == "" || len(p.Name) > 100 || (p.CategoryID == 0 && p.Category == "") || len(p.Category) > 240 || p.Price < 1 || p.Price > 1000000 || len(p.Description) > 500 || len(p.Material) > 300 || len(p.Details) > 3000 || (p.Care != nil && len(*p.Care) > 3000) || len(p.English) > 200 || len(p.Image) > 1000 || len(p.SKUs) < 1 || len(p.SKUs) > 120 {
 		return m.ProductView{}, api.Problem(400, "请检查名称、分类、价格、规格和描述长度")
 	}
 	if !validCatalogImage(p.Image) {

@@ -46,6 +46,15 @@ const detailInBag = computed(() => selectedSKU.value
   ? lines.value.some(line => line.productId === selectedId.value && line.variant === variant.value && line.color === color.value)
   : bagProducts.value.has(selectedId.value))
 const unavailable=computed(()=>lines.value.some(l=>!l.product.available||(l.product.skus.find(s=>s.variant===l.variant&&s.color===l.color)?.stock||0)<l.quantity||!l.product.options?.includes(l.variant)||!l.product.colors?.includes(l.color)))
+const productSections = computed(() => {
+  const product = selected.value
+  if (!product) return []
+  return [
+    { key: 'detail', name: '商品细节', text: product.details },
+    { key: 'care', name: '材质与养护', text: [product.material, product.care].filter(value => value?.trim()).join('\n\n') },
+    { key: 'delivery', name: '取货方式', text: '提交预约时可选择自提或送货上门，商家确认后安排备货。' },
+  ].filter(section => section.text?.trim())
+})
 const statusLabels={pending:'待商家确认',confirmed:'备货中',ready:'待自提',completed:'已完成',cancelled:'已取消'}
 function orderStatus(order) {
   return order.status === 'ready' && order.fulfillment === 'delivery' ? '待配送' : statusLabels[order.status]
@@ -101,7 +110,7 @@ function fillFromAccount() {
   contact.value = account.value.contact
   if (!address.value) address.value = account.value.dorm
 }
-function openProduct(p){selectedId.value=p.id;variant.value=p.options?.length===1?p.options[0]:'';color.value=p.colors?.[0]||'';quantity.value=1;zoomed.value=false;accordion.value='detail';overlay.value='product'}
+function openProduct(p){selectedId.value=p.id;variant.value=p.options?.length===1?p.options[0]:'';color.value=p.colors?.[0]||'';quantity.value=1;zoomed.value=false;accordion.value=p.details?.trim()?'detail':'';overlay.value='product'}
 function goCollection(c='全部商品',v='home'){category.value=c;view.value=v;search.value='';close();nextTick(()=>collection.value?.scrollIntoView({behavior:matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth',block:'start'}))}
 function runSearch(){category.value='全部商品';view.value='home';close();nextTick(()=>collection.value?.scrollIntoView({behavior:'smooth'}))}
 function home(){view.value='home';category.value='全部商品';search.value='';close();window.scrollTo({top:0,behavior:'smooth'})}
@@ -271,5 +280,5 @@ function keydown(e){if(e.key==='Escape')close();if(e.key==='Tab'&&overlay.value&
 watch(overlay,async(v,old)=>{document.body.style.overflow=v?'hidden':'';if(v&&!old)focusBefore=document.activeElement as HTMLElement;await nextTick();if(v){sheet.value?.scrollTo({top:0});sheet.value?.querySelector<HTMLElement>('button,input')?.focus({preventScroll:true});if(v==='search')searchInput.value?.focus()}else focusBefore?.focus?.({preventScroll:true})})
 onMounted(async()=>{void restoreAccount();try{await refresh()}catch{error.value='暂时无法连接精品店，请稍后重试'}finally{loading.value=false}document.addEventListener('keydown',keydown);interval=setInterval(async()=>{try{await refresh();if(current.value&&overlay.value==='success'){const shown=current.value;const updated=await getOrder(shown);if(current.value===shown)current.value=updated}}catch{error.value='连接暂时中断，正在重试…'}},5000)})
 onUnmounted(()=>{clearInterval(interval);clearTimeout(toastTimer);document.removeEventListener('keydown',keydown);document.body.style.overflow=''})
-return {categoryInfo,categories,visible,products,settings,loading,error,toast,category,sort,search,view,overlay,selected,variant,color,quantity,zoomed,accordion,cart,bagProducts,detailInBag,legacySaved,history,historyData,historyLoading,historyError,current,account,accountSecure,accountLoading,authError,signIn,saveAccount,logout,checkout,setCheckout,pickupOptions,returnToCheckout,returnToBag,loadOrders,customer,contact,note,pickup,busy,consent,service,fulfillment,address,deliveryRate,deliveryFee,orderStatus,collection,searchInput,sheet,lines,count,subtotal,total,unavailable,selectedSKU,statusLabels,year,serviceContent,money,close,open,openProduct,goCollection,runSearch,home,bagHeart,addToBag,changeQuantity,remove,submit,track,openOrders,showService}
+return {categoryInfo,categories,visible,products,settings,loading,error,toast,category,sort,search,view,overlay,selected,variant,color,quantity,zoomed,accordion,cart,bagProducts,detailInBag,legacySaved,productSections,history,historyData,historyLoading,historyError,current,account,accountSecure,accountLoading,authError,signIn,saveAccount,logout,checkout,setCheckout,pickupOptions,returnToCheckout,returnToBag,loadOrders,customer,contact,note,pickup,busy,consent,service,fulfillment,address,deliveryRate,deliveryFee,orderStatus,collection,searchInput,sheet,lines,count,subtotal,total,unavailable,selectedSKU,statusLabels,year,serviceContent,money,close,open,openProduct,goCollection,runSearch,home,bagHeart,addToBag,changeQuantity,remove,submit,track,openOrders,showService}
 }

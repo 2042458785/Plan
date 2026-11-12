@@ -80,3 +80,5 @@
   .checkout-information input::placeholder, .checkout-information textarea::placeholder { font-size: 14px; }
   .bag-checkout.is-checkout { position: static; margin-bottom: 0; box-shadow: none; }
 }
+
+.detail-accordions p { white-space: pre-wrap; overflow-wrap: anywhere; }

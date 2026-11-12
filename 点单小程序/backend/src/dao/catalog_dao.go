@@ -82,6 +82,9 @@ func (d *CatalogDao) SaveProduct(ctx context.Context, id string, input m.Product
 		product.Available = input.Available
 		product.Material = input.Material
 		product.Details = input.Details
+		if input.Care != nil {
+			product.Care = *input.Care
+		}
 		if creating {
 			if e := tx.Omit("Category", "SKUs").Create(&product).Error; e != nil {
 				return e

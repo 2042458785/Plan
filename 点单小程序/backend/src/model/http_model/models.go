@@ -19,6 +19,7 @@ type Product struct {
 	Available   bool         `gorm:"not null" json:"available"`
 	Material    string       `gorm:"size:300" json:"material"`
 	Details     string       `gorm:"type:text" json:"details"`
+	Care        string       `gorm:"type:text" json:"care"`
 	Version     uint64       `gorm:"not null;default:1" json:"version"`
 	Position    int          `json:"-"`
 	SKUs        []ProductSKU `gorm:"foreignKey:ProductID" json:"skus"`

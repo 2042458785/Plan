@@ -73,7 +73,7 @@
         <div class="form-two">
           <el-form-item label="商品名称" required><el-input v-model.trim="draft.name" maxlength="30" /></el-form-item>
           <el-form-item label="分类" required>
-            <el-select v-model="draft.categoryId" filterable placeholder="选择已有分类">
+            <el-select v-model="draft.categoryId" popper-class="product-category-popper" placeholder="选择已有分类">
               <el-option v-for="c in categories" :key="c.id" :label="c.name" :value="c.id" />
             </el-select>
           </el-form-item>
@@ -119,7 +119,8 @@
               <el-form-item label="英文名称"><el-input v-model.trim="draft.english" maxlength="60" /></el-form-item>
               <el-form-item label="材质"><el-input v-model.trim="draft.material" maxlength="100" /></el-form-item>
             </div>
-            <el-form-item label="商品详情与养护"><el-input v-model.trim="draft.details" type="textarea" :rows="3" maxlength="800" /></el-form-item>
+            <el-form-item label="商品细节"><el-input v-model="draft.details" type="textarea" :rows="3" maxlength="800" /></el-form-item>
+            <el-form-item label="养护说明"><el-input v-model="draft.care" type="textarea" :rows="3" maxlength="800" /></el-form-item>
           </el-collapse-item>
         </el-collapse>
         <div class="dialog-actions">
@@ -137,7 +138,7 @@ import { money, parseYuan } from '@/utils/money'
 
 const fresh = () => ({
   id: 'new', name: '', english: '', description: '', categoryId: null,
-  yuan: '', image: '', material: '', details: '', available: true, version: 0,
+  yuan: '', image: '', material: '', details: '', care: '', available: true, version: 0,
   skus: [{ variant: '标准款', color: '原色', stock: 0 }],
 })
 

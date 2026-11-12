@@ -21,3 +21,7 @@
 
 .settings-cover-preview { max-width: 480px; aspect-ratio: 2 / 1; margin-bottom: 10px; background: #eee9dc; overflow: hidden; }
 .settings-cover-preview img { width: 100%; height: 100%; object-fit: cover; }
+
+.product-editor.el-dialog { border-radius: 20px; }
+.product-editor .el-input__inner, .product-editor .el-textarea__inner, .product-editor .el-button,
+.product-category-popper.el-select-dropdown { border-radius: 10px; }

@@ -47,6 +47,7 @@ type ProductInput struct {
 	Available   bool       `json:"available"`
 	Material    string     `json:"material"`
 	Details     string     `json:"details"`
+	Care        *string    `json:"care"`
 	Version     uint64     `json:"version"`
 	SKUs        []SKUInput `json:"skus"`
 }

@@ -76,3 +76,14 @@ it('送货上门需要地址及联系方式，整单加 2 元', async () => {
   expect(JSON.parse(request[1].body)).toMatchObject({fulfillment:'delivery', address:'配送测试地址', pickup:''})
   expect(wrapper.get('.pickup-info').text()).toContain('配送测试地址')
 })
+
+it('商品细节和材质养护分别显示商家填写的内容', async () => {
+  const catalog = makeCatalog()
+  catalog.products[1] = {...catalog.products[1], details:'商品细节第一行\n第二行', material:'银色戒托', care:'单独收纳\n避免摩擦'}
+  api.mockResolvedValueOnce(catalog)
+  await render()
+  await wrapper.get('button[aria-label="查看初光 · 经典莫桑钻戒"]').trigger('click')
+  expect(wrapper.get('.detail-accordions p').element.textContent).toBe('商品细节第一行\n第二行')
+  await button('材质与养护').trigger('click')
+  expect(wrapper.get('.detail-accordions p').element.textContent).toBe('银色戒托\n\n单独收纳\n避免摩擦')
+})

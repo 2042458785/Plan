@@ -107,3 +107,14 @@ it('登录后显示顾客编号，并用账号会话读取预约', async () => {
   expect(wrapper.get('.account-identity').text()).toContain('SU-EXAMPLE')
   expect(api.mock.calls.some(([path,options]) => path === '/customers/orders' && options.headers.Authorization === 'Bearer fixture-customer-session')).toBe(true)
 })
+
+it('商品细节和材质养护分别显示商家填写的内容', async () => {
+  const catalog = makeCatalog()
+  catalog.products[1] = {...catalog.products[1], details:'商品细节第一行\n第二行', material:'银色戒托', care:'单独收纳\n避免摩擦'}
+  api.mockResolvedValueOnce(catalog)
+  await render()
+  await wrapper.get('button[aria-label="查看初光 · 经典莫桑钻戒"]').trigger('click')
+  expect(wrapper.get('.detail-accordions p').element.textContent).toBe('商品细节第一行\n第二行')
+  await button('材质与养护').trigger('click')
+  expect(wrapper.get('.detail-accordions p').element.textContent).toBe('银色戒托\n\n单独收纳\n避免摩擦')
+})

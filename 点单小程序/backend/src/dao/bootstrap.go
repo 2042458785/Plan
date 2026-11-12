@@ -28,6 +28,7 @@ type LegacyProduct struct {
 	Stock       int      `json:"stock"`
 	Material    string   `json:"material"`
 	Details     string   `json:"details"`
+	Care        string   `json:"care"`
 	Options     []string `json:"options"`
 	Colors      []string `json:"colors"`
 }
@@ -59,7 +60,7 @@ func initializeCatalog(tx *gorm.DB, state LegacyState) error {
 		if e := tx.Where("name = ?", p.Category).Attrs(m.Category{Name: p.Category, Position: index}).FirstOrCreate(&category).Error; e != nil {
 			return e
 		}
-		product := m.Product{ID: p.ID, Name: p.Name, English: p.English, Description: p.Description, CategoryID: category.ID, Price: p.Price, Image: p.Image, Available: p.Available, Material: p.Material, Details: p.Details, Version: 1, Position: index}
+		product := m.Product{ID: p.ID, Name: p.Name, English: p.English, Description: p.Description, CategoryID: category.ID, Price: p.Price, Image: p.Image, Available: p.Available, Material: p.Material, Details: p.Details, Care: p.Care, Version: 1, Position: index}
 		if e := tx.Create(&product).Error; e != nil {
 			return e
 		}
