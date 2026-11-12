@@ -4,6 +4,7 @@ import (
 	"Boutique/src/api"
 	ctl "Boutique/src/api/http_controller"
 	"Boutique/src/config"
+	"Boutique/src/dao"
 	"Boutique/src/middleware"
 	"Boutique/src/service"
 	"Boutique/src/theValidator"
@@ -24,6 +25,7 @@ func SetupRouter(cfg *config.AppConfig, db *gorm.DB, catalog *service.CatalogSer
 	catalogController := ctl.NewCatalogController(catalog)
 	orderController := ctl.NewOrderController(orders)
 	authController := ctl.NewAuthController(auth)
+	customerController := ctl.NewCustomerController(&service.CustomerService{Dao: &dao.CustomerDao{Orm: db}})
 	r.GET("/healthz", func(c *gin.Context) {
 		ctx, cancel := context.WithTimeout(c.Request.Context(), 2*time.Second)
 		defer cancel()
@@ -48,6 +50,16 @@ func SetupRouter(cfg *config.AppConfig, db *gorm.DB, catalog *service.CatalogSer
 	v1.GET("/media/:id", catalogController.Image)
 	v1.POST("/orders", orderController.Create)
 	v1.GET("/orders/:id", orderController.Lookup)
+	customers := v1.Group("/customers", ctl.CustomerTransport)
+	customers.POST("/register", customerController.Credentials(true))
+	customers.POST("/login", customerController.Credentials(false))
+	account := customers.Group("", customerController.RequireAccount)
+	account.GET("/profile", customerController.Profile)
+	account.PUT("/profile", customerController.SaveProfile)
+	account.POST("/logout", customerController.Logout)
+	account.POST("/orders", orderController.Create)
+	account.GET("/orders", orderController.CustomerOrders)
+	account.GET("/orders/:id", orderController.CustomerOrder)
 	// 所有管理接口都经过服务端 JWT、角色与持久化会话校验。
 	admin := v1.Group("/admin")
 	admin.POST("/login", authController.Login)

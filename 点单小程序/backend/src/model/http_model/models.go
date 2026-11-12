@@ -56,6 +56,7 @@ type ProductImage struct {
 }
 
 type Order struct {
+	CustomerID  string      `gorm:"size:20;index;not null;default:''" json:"customerNumber,omitempty"`
 	ID          string      `gorm:"primaryKey;size:48" json:"id"`
 	Number      string      `gorm:"size:40;uniqueIndex;not null" json:"number"`
 	LookupToken string      `gorm:"size:64;not null" json:"-"`

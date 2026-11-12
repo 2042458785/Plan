@@ -74,5 +74,5 @@ func InitMysql(cfg MySQLConfig) (*gorm.DB, error) {
 	return db, nil
 }
 func Migrate(db *gorm.DB) error {
-	return db.AutoMigrate(&m.Category{}, &m.Product{}, &m.ProductSKU{}, &m.ProductImage{}, &m.ShopSetting{}, &m.Order{}, &m.OrderItem{}, &m.StockMovement{}, &m.AdminUser{}, &m.AdminSession{}, &m.AdminAuditLog{}, &m.MigrationRecord{}, &m.LoginAttempt{})
+	return db.AutoMigrate(&m.Category{}, &m.Product{}, &m.ProductSKU{}, &m.ProductImage{}, &m.ShopSetting{}, &m.Order{}, &m.OrderItem{}, &m.StockMovement{}, &m.AdminUser{}, &m.AdminSession{}, &m.AdminAuditLog{}, &m.MigrationRecord{}, &m.LoginAttempt{}, &m.CustomerAccount{}, &m.CustomerSession{})
 }

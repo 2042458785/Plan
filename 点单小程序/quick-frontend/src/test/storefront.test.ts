@@ -89,3 +89,21 @@ it('使用后台封面，购物袋和预约分两步，自提只提供三种安�
   await wrapper.get('input[value="delivery"]').setValue(true)
   expect(wrapper.get('input[autocomplete="street-address"]').attributes('placeholder')).toContain('寝室楼栋和寝室号')
 })
+
+it('登录后显示顾客编号，并用账号会话读取预约', async () => {
+  const account = { number:'SU-EXAMPLE', name:'测试顾客', contact:'fixture_wechat', dorm:'3 栋 508' }
+  api.mockImplementation(async (path, options) => {
+    if (path === '/catalog') return makeCatalog()
+    if (path === '/customers/login') return { account, token:'fixture-customer-session' }
+    if (path === '/customers/orders' && options.headers.Authorization === 'Bearer fixture-customer-session') return []
+    throw Error('未声明的测试请求')
+  })
+  await render()
+  await wrapper.get('button[aria-label="我的账号与预约"]').trigger('click')
+  await wrapper.get('input[autocomplete="username"]').setValue('fixture_wechat')
+  await wrapper.get('input[type="password"]').setValue('fixture-password')
+  await wrapper.get('.account-form').trigger('submit')
+  await flushPromises()
+  expect(wrapper.get('.account-identity').text()).toContain('SU-EXAMPLE')
+  expect(api.mock.calls.some(([path,options]) => path === '/customers/orders' && options.headers.Authorization === 'Bearer fixture-customer-session')).toBe(true)
+})

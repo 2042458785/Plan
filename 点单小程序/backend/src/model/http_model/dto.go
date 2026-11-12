@@ -57,9 +57,10 @@ type SKUInput struct {
 	Stock   int    `json:"stock"`
 }
 type CreateOrderInput struct {
+	CustomerID  string           `json:"-"`
 	Items       []OrderLineInput `json:"items" binding:"required,min=1,max=30,dive"`
 	Note        string           `json:"note"`
-	Customer    string           `json:"customer" binding:"required,max=100"`
+	Customer    string           `json:"customer"`
 	Contact     string           `json:"contact"`
 	Pickup      string           `json:"pickup"`
 	Key         string           `json:"key"`

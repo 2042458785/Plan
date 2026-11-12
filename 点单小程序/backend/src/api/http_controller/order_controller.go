@@ -21,10 +21,16 @@ func (c *OrderController) Create(ctx *gin.Context) {
 	if e := c.BuildRequest(api.BuildRequestOption{Ctx: ctx, DTO: &in}).GetError(); e != nil {
 		return
 	}
+	if account, ok := currentCustomer(ctx); ok {
+		in.CustomerID, in.Customer, in.Contact = account.ID, account.Name, account.Identifier
+	}
 	out, e := c.Service.Create(ctx.Request.Context(), in)
 	if e != nil {
 		api.RespondError(ctx, e)
 		return
+	}
+	if in.CustomerID != "" {
+		out.Token = ""
 	}
 	api.Ok(ctx, out)
 }
@@ -65,4 +71,24 @@ func (c *OrderController) Update(ctx *gin.Context) {
 		return
 	}
 	api.Ok(ctx, out)
+}
+
+func (c *OrderController) CustomerOrders(ctx *gin.Context) {
+	account, _ := currentCustomer(ctx)
+	orders, err := c.Service.CustomerOrders(ctx.Request.Context(), account.ID)
+	if err != nil {
+		api.RespondError(ctx, err)
+		return
+	}
+	api.Ok(ctx, orders)
+}
+
+func (c *OrderController) CustomerOrder(ctx *gin.Context) {
+	account, _ := currentCustomer(ctx)
+	order, err := c.Service.CustomerOrder(ctx.Request.Context(), account.ID, ctx.Param("id"))
+	if err != nil {
+		api.RespondError(ctx, err)
+		return
+	}
+	api.Ok(ctx, order)
 }

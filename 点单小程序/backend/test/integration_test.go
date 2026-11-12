@@ -138,7 +138,7 @@ func TestMySQLIntegration(t *testing.T) {
 		if e := f.db.Raw("SELECT table_name FROM information_schema.tables WHERE table_schema = ? ORDER BY table_name", f.cfg.MySQL.DBName).Scan(&names).Error; e != nil {
 			t.Fatal(e)
 		}
-		required := []string{"sys_category", "sys_product", "sys_product_sku", "sys_product_image", "sys_shop_setting", "sys_order", "sys_order_item", "sys_stock_movement", "sys_admin_user", "sys_admin_session", "sys_admin_audit_log", "sys_migration_record", "sys_login_attempt"}
+		required := []string{"sys_category", "sys_product", "sys_product_sku", "sys_product_image", "sys_shop_setting", "sys_order", "sys_order_item", "sys_stock_movement", "sys_admin_user", "sys_admin_session", "sys_admin_audit_log", "sys_migration_record", "sys_login_attempt", "sys_customer_account", "sys_customer_session"}
 		if len(names) != len(required) {
 			t.Fatalf("业务表数量不正确: %v", names)
 		}
@@ -560,11 +560,64 @@ func TestCatalogAndDeliveryIntegration(t *testing.T) {
 	}
 }
 
-func TestQuickCoverIntegration(t *testing.T) {
+func TestCustomerAccountAndCoverIntegration(t *testing.T) {
 	if os.Getenv("RUN_MYSQL_TESTS") != "1" {
 		t.Skip("需要临时 MySQL 实例")
 	}
 	f := setup(t)
+	const base = "https://suxu.test/api/v1/customers"
+	credentials := m.CustomerCredentials{Contact: "test_wechat_01", Password: "fixture-password-01", Name: "测试顾客"}
+	if w := call(f.router, "POST", "/api/v1/customers/register", credentials, "", ""); w.Code != 403 {
+		t.Fatalf("非本机明文连接未拒绝: %d", w.Code)
+	}
+	type session struct {
+		Account m.CustomerAccount
+		Token   string
+	}
+	var first, second, restored session
+	decode(t, call(f.router, "POST", base+"/register", credentials, "", ""), &first)
+	if !strings.HasPrefix(first.Account.ID, "SU-") || first.Token == "" {
+		t.Fatal("注册缺少顾客编号或会话")
+	}
+	if w := call(f.router, "POST", base+"/register", credentials, "", ""); w.Code != 409 {
+		t.Fatal("允许重复注册")
+	}
+	bad := credentials
+	bad.Password = "incorrect-password"
+	if w := call(f.router, "POST", base+"/login", bad, "", ""); w.Code != 401 {
+		t.Fatal("错误密码被接受")
+	}
+	decode(t, call(f.router, "POST", base+"/login", credentials, "", ""), &restored)
+	if restored.Account.ID != first.Account.ID || restored.Token == first.Token {
+		t.Fatal("同一账号登录后顾客编号变化或会话重复")
+	}
+	credentials.Contact = "test_wechat_02"
+	decode(t, call(f.router, "POST", base+"/register", credentials, "", ""), &second)
+	var profile m.CustomerAccount
+	decode(t, call(f.router, "PUT", base+"/profile", m.CustomerProfileInput{Name: "更新称呼", Dorm: "3 栋 508"}, restored.Token, ""), &profile)
+	if profile.ID != first.Account.ID || profile.Dorm != "3 栋 508" {
+		t.Fatal("账号资料未保存")
+	}
+	req := orderInput("customer-integration-order")
+	req.Customer, req.Contact, req.Pickup = "伪造称呼", "", "明日喜提"
+	var order m.OrderView
+	decode(t, call(f.router, "POST", base+"/orders", req, restored.Token, ""), &order)
+	if order.CustomerID != first.Account.ID || order.Customer != "更新称呼" || order.Contact != "test_wechat_01" || order.Token != "" {
+		t.Fatal("订单没有关联已登录的顾客资料，或泄露了旧版查询凭证")
+	}
+	var orders []m.Order
+	decode(t, call(f.router, "GET", base+"/orders", nil, second.Token, ""), &orders)
+	if len(orders) != 0 {
+		t.Fatal("另一账号能看见订单列表")
+	}
+	if w := call(f.router, "GET", base+"/orders/"+order.ID, nil, second.Token, ""); w.Code != 404 {
+		t.Fatal("另一账号能读取订单详情")
+	}
+	decode(t, call(f.router, "GET", base+"/orders/"+order.ID, nil, first.Token, ""), &order)
+	decode(t, call(f.router, "POST", base+"/logout", map[string]any{}, restored.Token, ""), nil)
+	if w := call(f.router, "GET", base+"/profile", nil, restored.Token, ""); w.Code != 401 {
+		t.Fatal("退出登录未撤销会话")
+	}
 	adminToken := login(t, f)
 	var catalog struct{ Settings m.ShopSetting }
 	decode(t, call(f.router, "GET", "/api/v1/admin/catalog", nil, adminToken, ""), &catalog)

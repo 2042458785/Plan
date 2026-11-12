@@ -58,3 +58,14 @@ func (s *OrderService) Update(ctx context.Context, id string, input m.UpdateOrde
 	}
 	return s.Dao.Update(ctx, id, input, adminID)
 }
+
+func (s *OrderService) CustomerOrders(ctx context.Context, customerID string) ([]m.Order, error) {
+	return s.Dao.CustomerOrders(ctx, customerID)
+}
+
+func (s *OrderService) CustomerOrder(ctx context.Context, customerID, id string) (m.Order, error) {
+	if len(id) > 48 {
+		return m.Order{}, api.Problem(404, "预约不存在")
+	}
+	return s.Dao.CustomerOrder(ctx, customerID, id)
+}

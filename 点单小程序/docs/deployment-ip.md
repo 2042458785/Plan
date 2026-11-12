@@ -37,6 +37,8 @@ npm --prefix admin run build
 
 分类、商品图片和配送订单需要同时部署新版 Go 后端与三个前端构建。后端启动时迁移图片表和订单字段。新库使用 `bootstrap.seed_catalog: false`，后台在「商品与库存」先添加分类，再上传商品，在「店铺设置」开启预约。已有数据由后台管理。图片上传支持最多 4 MB，Nginx 配置已包含对应的请求大小限制。
 
+新版顾客账号通过 HTTPS 使用。若在 Nginx 配置 HTTPS 入口，需要在该入口设置 `X-Forwarded-Proto $scheme`，并继续代理 `/api/`。原 HTTP 入口仍支持普通预约。
+
 各项目可单独构建及上传。分别将 `frontend/quick/`、`quick-frontend/quick/`、`admin/dist_end/` 的内容放入上表对应目录。开发端口分别是 8081、8083、8082。
 
 ## 检查

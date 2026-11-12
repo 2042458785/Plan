@@ -48,7 +48,7 @@ function selectCategory(name: string) {
       </a>
       <div class="quick-actions">
         <a :href="storefrontURL" class="quick-full-shop">完整商城 <Icon name="arrow" :size="13" /></a>
-        <button type="button" aria-label="我的预约" @click="emit('openOrders')">
+        <button type="button" aria-label="我的账号与预约" @click="emit('openOrders')">
           <Icon name="user" :size="20" />
         </button>
         <button type="button" class="quick-bag" aria-label="打开购物袋" @click="emit('openBag')">

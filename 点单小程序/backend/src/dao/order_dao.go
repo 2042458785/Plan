@@ -28,7 +28,7 @@ func (d *OrderDao) Create(ctx context.Context, input m.CreateOrderInput) (m.Orde
 		var existing m.Order
 		e := tx.Clauses(clause.Locking{Strength: "UPDATE"}).Preload("Items").First(&existing, "request_key = ?", input.Key).Error
 		if e == nil {
-			if existing.Fingerprint != fingerprint {
+			if existing.Fingerprint != fingerprint || existing.CustomerID != input.CustomerID {
 				return api.Problem(409, "幂等键已用于不同内容，请重新确认预约")
 			}
 			result = m.OrderView{Order: existing, Token: existing.LookupToken}
@@ -62,7 +62,7 @@ func (d *OrderDao) Create(ctx context.Context, input m.CreateOrderInput) (m.Orde
 			}
 			return lines[i].ProductID < lines[j].ProductID
 		})
-		order := m.Order{ID: utils.RandomID(), LookupToken: utils.RandomID(), RequestKey: input.Key, Fingerprint: fingerprint, Customer: input.Customer, Contact: input.Contact, Pickup: input.Pickup, Note: input.Note, Status: "pending", Version: 1, CreatedAt: time.Now(), Items: []m.OrderItem{}}
+		order := m.Order{CustomerID: input.CustomerID, ID: utils.RandomID(), LookupToken: utils.RandomID(), RequestKey: input.Key, Fingerprint: fingerprint, Customer: input.Customer, Contact: input.Contact, Pickup: input.Pickup, Note: input.Note, Status: "pending", Version: 1, CreatedAt: time.Now(), Items: []m.OrderItem{}}
 		order.Fulfillment = "pickup"
 		if input.Fulfillment == "delivery" {
 			order.Fulfillment = input.Fulfillment
@@ -146,7 +146,7 @@ func (d *OrderDao) List(ctx context.Context, page, size int, status, search stri
 	}
 	if search != "" {
 		pattern := "%" + search + "%"
-		q = q.Where("number LIKE ? OR customer LIKE ? OR EXISTS (SELECT 1 FROM sys_order_item AS i WHERE i.order_id = sys_order.id AND i.name LIKE ?)", pattern, pattern, pattern)
+		q = q.Where("number LIKE ? OR customer LIKE ? OR customer_id LIKE ? OR EXISTS (SELECT 1 FROM sys_order_item AS i WHERE i.order_id = sys_order.id AND i.name LIKE ?)", pattern, pattern, pattern, pattern)
 	}
 	if e := q.Count(&total).Error; e != nil {
 		return nil, 0, e
@@ -230,4 +230,20 @@ func (d *OrderDao) Update(ctx context.Context, id string, input m.UpdateOrderInp
 		return nil
 	})
 	return result, e
+}
+
+func (d *OrderDao) CustomerOrders(ctx context.Context, customerID string) ([]m.Order, error) {
+	orders := []m.Order{}
+	err := d.Orm.WithContext(ctx).Where("customer_id = ?", customerID).
+		Preload("Items").Order("created_at DESC, id DESC").Limit(100).Find(&orders).Error
+	return orders, err
+}
+
+func (d *OrderDao) CustomerOrder(ctx context.Context, customerID, id string) (m.Order, error) {
+	var order m.Order
+	err := d.Orm.WithContext(ctx).Where("customer_id = ? AND id = ?", customerID, id).Preload("Items").First(&order).Error
+	if err == gorm.ErrRecordNotFound {
+		return order, api.Problem(404, "预约不存在")
+	}
+	return order, err
 }

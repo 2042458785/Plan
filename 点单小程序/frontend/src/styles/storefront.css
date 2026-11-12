@@ -17,11 +17,20 @@
 .footer-column .s-quick-link { color: #8b7653; font-size: 10px; }
 .navigation-links .s-quick-link { display: block; padding: 21px 0; border-bottom: 1px solid var(--line); font: 21px 'Songti SC', serif; letter-spacing: 2px; }
 
-/* 购物袋与预约 */
+/* 购物袋、预约和顾客账号 */
 .s-sheet { min-width: 0; overflow-x: hidden; }
 .s-sheet .sheet-heading h2:focus { outline: none; }
 .checkout-back { display: inline-flex; padding: 8px 0; min-height: 40px; color: #625333; text-align: left; }
 .checkout-information > .checkout-back { margin-bottom: 10px; }
+.checkout-account, .account-identity {
+  display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px;
+  background: #f3eddf; padding: 15px; margin-bottom: 18px;
+}
+.checkout-account strong, .checkout-account span, .account-identity span, .account-identity strong { display: block; }
+.checkout-account span, .account-identity span { color: #6f5b3a; margin-top: 5px; font-size: 12px; }
+.checkout-account button { color: #625333; min-height: 40px; text-decoration: underline; }
+.checkout-account > div, .account-identity > div { min-width: 0; overflow-wrap: anywhere; }
+.account-identity strong { margin-top: 7px; font-size: 17px; font-variant-numeric: tabular-nums; }
 .fulfillment-options { margin: 4px 0 17px; padding: 0; min-width: 0; border: 0; display: flex; gap: 8px; }
 .fulfillment-options legend { padding: 0; margin-bottom: 8px; font-size: 13px; }
 .checkout-information .fulfillment-options label { flex: 1; margin: 0; min-width: 0; position: relative; }
@@ -36,10 +45,24 @@
 .checkout-fields > label, .bag-line-description, .customer-order-heading > span { min-width: 0; overflow-wrap: anywhere; }
 .bag-line-actions { flex-wrap: wrap; row-gap: 6px; }
 .legacy-saved { margin: 15px 0 25px; border-top: 1px solid #dfd4bd; padding-top: 14px; }
-.legacy-saved h3 { font: 400 21px/1.4 'Songti SC', serif; margin: 0 0 12px; }
+.legacy-saved h3, .account-orders h3 { font: 400 21px/1.4 'Songti SC', serif; margin: 0 0 12px; }
 .legacy-saved button { display: flex; width: 100%; align-items: center; gap: 12px; padding: 9px 0; text-align: left; }
 .legacy-saved img { width: 44px; height: 52px; object-fit: cover; }
 .legacy-saved small { display: block; color: #6f5b3a; margin-top: 4px; }
+.account-tabs { display: flex; gap: 10px; margin-bottom: 15px; }
+.account-tabs button { padding: 8px 17px; min-height: 44px; border: 1px solid #e3d7bf; color: #53462f; }
+.account-tabs button[aria-pressed="true"] { background: #eeeadc; border-color: #8b7957; }
+.account-form { display: grid; gap: 13px; }
+.account-form label { display: block; color: #544731; font-size: 13px; }
+.account-form label small { color: #685c45; }
+.account-form input {
+  display: block; width: 100%; min-height: 44px; padding: 8px 11px; margin-top: 6px;
+  background: #fffef9; color: #443823; border: 1px solid #e3d7bf; font-size: 16px; border-radius: 0;
+}
+.account-form input[readonly] { background: #f7f3e9; }
+.account-form > button { width: fit-content; min-height: 44px; }
+.account-panel > p, .account-orders > p { margin-top: 12px; color: #64583f; line-height: 1.6; }
+.account-orders { margin-top: 25px; padding-top: 18px; border-top: 1px solid #dfd4bd; }
 .customer-order-heading { flex-wrap: wrap; gap: 5px; }
 .customer-order-heading b { flex-shrink: 0; }
 .reservation-id { min-width: 0; padding-inline: 12px; }
@@ -48,6 +71,7 @@
   font-weight: 500; line-height: 1.45; letter-spacing: .015em; white-space: normal; overflow-wrap: anywhere;
   user-select: all; -webkit-user-select: all;
 }
+.reservation-id > small { display: block; margin-top: 8px; color: #635337; overflow-wrap: anywhere; }
 .pickup-info > div, .success-items h3, .success-items p, .reservation-note { min-width: 0; overflow-wrap: anywhere; }
 
 @media (max-width: 720px) {
