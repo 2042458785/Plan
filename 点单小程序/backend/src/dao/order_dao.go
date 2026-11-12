@@ -18,6 +18,8 @@ type OrderDao struct{ Orm *gorm.DB }
 
 func (d *OrderDao) Create(ctx context.Context, input m.CreateOrderInput) (m.OrderView, error) {
 	var result m.OrderView
+	expectedTotal := input.ExpectedTotal
+	input.ExpectedTotal = nil // 金额校验用于首次写入，已落单的重试沿用原预约。
 	fingerprint := utils.Fingerprint(input)
 	e := utils.WithTransaction(ctx, d.Orm, func(tx *gorm.DB) error {
 		// 锁住店铺设置后做幂等校验，保证跨进程请求也不会重复落单。
@@ -107,6 +109,9 @@ func (d *OrderDao) Create(ctx context.Context, input m.CreateOrderInput) (m.Orde
 			if e = tx.Create(&m.StockMovement{SKUID: l.SKU.ID, ProductID: p.ID, OrderID: order.ID, Delta: -l.Quantity, Reason: "order_created", BusinessKey: fmt.Sprintf("reserve:%s:%d:%d", order.ID, l.SKU.ID, i)}).Error; e != nil {
 				return e
 			}
+		}
+		if expectedTotal != nil && *expectedTotal != order.Total {
+			return api.Problem(409, "商品价格或配送费已变化，请重新确认金额")
 		}
 		for id := range lockedProducts {
 			if e = tx.Model(&m.Product{}).Where("id = ?", id).UpdateColumn("version", gorm.Expr("version + 1")).Error; e != nil {

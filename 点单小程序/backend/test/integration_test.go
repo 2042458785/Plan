@@ -646,3 +646,43 @@ func TestCustomerAccountAndCoverIntegration(t *testing.T) {
 		t.Fatal("快速商城未获得已保存的封面")
 	}
 }
+
+func TestCheckoutExpectedTotalIntegration(t *testing.T) {
+	if os.Getenv("RUN_MYSQL_TESTS") != "1" {
+		t.Skip("需要临时 MySQL 实例")
+	}
+	f := setup(t)
+	input := orderInput("price-confirmation-integration")
+	oldTotal := int64(69900)
+	input.ExpectedTotal = &oldTotal
+	input.Fulfillment = "delivery"
+	input.Contact = "fixture_contact"
+	input.Address = "测试寝室"
+	response := call(f.router, "POST", "/api/v1/orders", input, "", "")
+	if response.Code != 409 || !strings.Contains(response.Body.String(), "请重新确认金额") {
+		t.Fatalf("旧金额应返回 409，实际 %d", response.Code)
+	}
+	var sku m.ProductSKU
+	if err := f.db.Where("product_id = ? AND variant = ? AND color = ?", "p2", input.Items[0].Variant, input.Items[0].Color).First(&sku).Error; err != nil || sku.Stock != 3 {
+		t.Fatalf("价格拒绝后库存应回滚，当前 %d，错误 %v", sku.Stock, err)
+	}
+	var movements int64
+	if err := f.db.Model(&m.StockMovement{}).Where("reason = ?", "order_created").Count(&movements).Error; err != nil || movements != 0 {
+		t.Fatalf("价格拒绝后不应留下订单流水，当前 %d，错误 %v", movements, err)
+	}
+	confirmedTotal := int64(70100)
+	input.ExpectedTotal = &confirmedTotal
+	var first, retry m.OrderView
+	decode(t, call(f.router, "POST", "/api/v1/orders", input, "", ""), &first)
+	if err := f.db.Model(&m.ShopSetting{}).Where("id = ?", 1).Update("open", false).Error; err != nil {
+		t.Fatal(err)
+	}
+	if err := f.db.Model(&m.Product{}).Where("id = ?", "p2").Update("available", false).Error; err != nil {
+		t.Fatal(err)
+	}
+	input.ExpectedTotal = &oldTotal
+	decode(t, call(f.router, "POST", "/api/v1/orders", input, "", ""), &retry)
+	if first.ID == "" || first.ID != retry.ID || retry.Total != confirmedTotal {
+		t.Fatal("重复请求应取得原预约和原成交金额")
+	}
+}

@@ -58,15 +58,16 @@ type SKUInput struct {
 	Stock   int    `json:"stock"`
 }
 type CreateOrderInput struct {
-	CustomerID  string           `json:"-"`
-	Items       []OrderLineInput `json:"items" binding:"required,min=1,max=30,dive"`
-	Note        string           `json:"note"`
-	Customer    string           `json:"customer"`
-	Contact     string           `json:"contact"`
-	Pickup      string           `json:"pickup"`
-	Key         string           `json:"key"`
-	Fulfillment string           `json:"fulfillment,omitempty"`
-	Address     string           `json:"address,omitempty"`
+	ExpectedTotal *int64           `json:"expectedTotal,omitempty" binding:"omitempty,gte=0"`
+	CustomerID    string           `json:"-"`
+	Items         []OrderLineInput `json:"items" binding:"required,min=1,max=30,dive"`
+	Note          string           `json:"note"`
+	Customer      string           `json:"customer"`
+	Contact       string           `json:"contact"`
+	Pickup        string           `json:"pickup"`
+	Key           string           `json:"key"`
+	Fulfillment   string           `json:"fulfillment,omitempty"`
+	Address       string           `json:"address,omitempty"`
 }
 type OrderLineInput struct {
 	ProductID string `json:"productId"`

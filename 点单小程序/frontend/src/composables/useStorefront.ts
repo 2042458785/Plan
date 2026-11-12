@@ -34,18 +34,53 @@ const categoryInfo = computed(() => {
     .map(item => ({ ...item, image: covers.get(item.name) }))
 })
 const visible=computed(()=>{let data=listedProducts.value.filter(p=>(category.value==='全部商品'||p.category===category.value)&&(!search.value||(p.name+p.description+p.category+p.english).toLowerCase().includes(search.value.toLowerCase())));if(sort.value==='low')data.sort((a,b)=>a.price-b.price);if(sort.value==='high')data.sort((a,b)=>b.price-a.price);return data})
-const lines=computed(()=>cart.value.map(l=>{const p=products.value.find(p=>p.id===l.productId);return p?{...l,product:p}:null}).filter(Boolean))
+function resolveLine(line: BagLine) {
+  const product = products.value.find(item => item.id === line.productId)
+  return product ? { ...line, product } : null
+}
+
+const lines = computed(() => cart.value.map(resolveLine).filter(Boolean))
+type ResolvedLine = NonNullable<ReturnType<typeof resolveLine>>
+const checkedKeys = ref(new Set<string>())
+const directLine = ref<BagLine | null>(null)
+
+function lineUnavailable(line: ResolvedLine) {
+  const sku = line.product.skus.find(item => item.variant === line.variant && item.color === line.color)
+  return !line.product.available || !sku || line.quantity > sku.stock
+}
+
+const selectedLines = computed(() => lines.value.filter(line => checkedKeys.value.has(line.key)))
+const eligibleLines = computed(() => lines.value.filter(line => !lineUnavailable(line)))
+const allChecked = computed(() => eligibleLines.value.length > 0 &&
+  eligibleLines.value.every(line => checkedKeys.value.has(line.key)))
+const someChecked = computed(() => selectedLines.value.length > 0 && !allChecked.value)
+const checkoutLines = computed(() => {
+  if (!directLine.value) return selectedLines.value
+  const line = resolveLine(directLine.value)
+  return line ? [line] : []
+})
+
+function toggleLine(line: ResolvedLine) {
+  if (checkedKeys.value.has(line.key)) checkedKeys.value.delete(line.key)
+  else if (!lineUnavailable(line)) checkedKeys.value.add(line.key)
+}
+
+function toggleAll() {
+  checkedKeys.value = new Set(allChecked.value ? [] : eligibleLines.value.map(line => line.key))
+}
 const bagProducts = computed(() => new Set(lines.value.map(line => line.productId)))
 const legacySaved = computed(() => listedProducts.value.filter(product => favorites.value.includes(product.id) && !bagProducts.value.has(product.id)))
 const count = computed(() => lines.value.reduce((n, line) => n + line.quantity, 0))
-const subtotal = computed(() => lines.value.reduce((n, line) => n + line.quantity * line.product.price, 0))
-const deliveryFee = computed(() => fulfillment.value === 'delivery' ? deliveryRate.value : 0)
+const checkoutTooLarge = computed(() => checkoutLines.value.length > 30)
+const checkoutCount = computed(() => checkoutLines.value.reduce((n, line) => n + line.quantity, 0))
+const subtotal = computed(() => checkoutLines.value.reduce((n, line) => n + line.quantity * line.product.price, 0))
+const deliveryFee = computed(() => checkoutCount.value && fulfillment.value === 'delivery' ? deliveryRate.value : 0)
 const total = computed(() => subtotal.value + deliveryFee.value)
 const selectedSKU=computed(()=>selected.value?.skus?.find(s=>s.variant===variant.value&&s.color===color.value))
-const detailInBag = computed(() => selectedSKU.value
+const detailInBag = computed(() => variant.value && color.value
   ? lines.value.some(line => line.productId === selectedId.value && line.variant === variant.value && line.color === color.value)
   : bagProducts.value.has(selectedId.value))
-const unavailable=computed(()=>lines.value.some(l=>!l.product.available||(l.product.skus.find(s=>s.variant===l.variant&&s.color===l.color)?.stock||0)<l.quantity||!l.product.options?.includes(l.variant)||!l.product.colors?.includes(l.color)))
+const unavailable = computed(() => checkoutLines.value.some(lineUnavailable))
 const productSections = computed(() => {
   const product = selected.value
   if (!product) return []
@@ -59,7 +94,7 @@ const statusLabels={pending:'待商家确认',confirmed:'备货中',ready:'待�
 function orderStatus(order) {
   return order.status === 'ready' && order.fulfillment === 'delivery' ? '待配送' : statusLabels[order.status]
 }
-watch(fulfillment, () => { consent.value = false }, { flush: 'sync' })
+watch([fulfillment, total], () => { consent.value = false }, { flush: 'sync' })
 watch(account, (active, previous) => {
   if (active && previous?.number === active.number && address.value === previous.dorm) address.value = active.dorm
 })
@@ -79,6 +114,7 @@ async function refresh() {
   const activeIDs = new Set(products.value.map(product => product.id))
   const remaining = cart.value.filter(line => activeIDs.has(line.productId))
   if (remaining.length !== cart.value.length) {
+    for (const line of cart.value) if (!activeIDs.has(line.productId)) checkedKeys.value.delete(line.key)
     persist('suxu-bag-v1', remaining)
     notify('已从购物袋移除下架商品')
   }
@@ -90,13 +126,27 @@ async function refresh() {
   error.value = ''
 }
 
-function close(){if(overlay.value==='orders'&&returnToCheckout.value){returnToBag();return}if(overlay.value==='service'&&serviceReturn.value==='product'){overlay.value='product';serviceReturn.value='';return}overlay.value='';zoomed.value=false}
+function close(){if(busy.value)return;if(overlay.value==='orders'&&returnToCheckout.value){returnToBag();return}if(overlay.value==='service'&&serviceReturn.value==='product'){overlay.value='product';serviceReturn.value='';return}overlay.value='';zoomed.value=false}
 function open(name) {
-  if (name === 'bag') checkout.value = false
+  if (name === 'bag') {
+    pendingOrder.value = null
+    toast.value = ''
+    checkout.value = false
+    directLine.value = null
+  }
   overlay.value = name
 }
 function setCheckout(value: boolean) {
+  if (busy.value || (value && (!checkoutCount.value || checkoutTooLarge.value || unavailable.value || !settings.value.open))) return
+  pendingOrder.value = null
+  if (!value && directLine.value) {
+    directLine.value = null
+    checkout.value = false
+    overlay.value = selected.value ? 'product' : ''
+    return
+  }
   checkout.value = value
+  toast.value = ''
   consent.value = false
   if (value) fillFromAccount()
   nextTick(() => {
@@ -134,36 +184,82 @@ function putInBag(product: Product, sku: Product['skus'][number], amount: number
 
 function bagHeart(product: Product) {
   const productLines = lines.value.filter(line => line.productId === product.id)
-  const sku = overlay.value === 'product' && selectedId.value === product.id ? selectedSKU.value : undefined
-  const matching = sku ? productLines.find(line => line.variant === sku.variant && line.color === sku.color) : productLines.length === 1 ? productLines[0] : undefined
+  const choosingSpecs = overlay.value === 'product' && selectedId.value === product.id
+  const hasSelection = choosingSpecs && Boolean(variant.value && color.value)
+  const matching = hasSelection
+    ? productLines.find(line => line.variant === variant.value && line.color === color.value)
+    : productLines.length === 1 ? productLines[0] : undefined
   if (matching) {
     remove(matching)
     notify('已从购物袋移除')
     return
   }
-  if (productLines.length && !sku) { open('bag'); return }
+  if (hasSelection) {
+    if (selectedSKU.value) putInBag(product, selectedSKU.value, 1)
+    else notify('当前选择的颜色和规格无法购买')
+    return
+  }
+  if (productLines.length) { open('bag'); return }
   const available = product.skus.filter(option => option.stock > 0)
   if (!product.available || !available.length || !settings.value.open) {
     notify('这件商品暂不可预约')
     return
   }
-  if (sku?.stock || available.length === 1) {
-    putInBag(product, sku?.stock ? sku : available[0], 1)
+  if (!choosingSpecs && available.length === 1) {
+    putInBag(product, available[0], 1)
   } else {
-    openProduct(product)
+    if (!choosingSpecs) openProduct(product)
     notify('请选择颜色和规格后加入购物袋')
     nextTick(() => sheet.value?.querySelector<HTMLElement>('.detail-information')?.scrollIntoView({ block: 'start' }))
   }
 }
 
-function addToBag() {
+function buyNow() {
+  const product = selected.value
+  const sku = selectedSKU.value
   if (!variant.value || !color.value) { notify('请先选择颜色和规格'); return }
-  if (selected.value && putInBag(selected.value, selectedSKU.value, quantity.value)) open('bag')
+  if (!product?.available || !settings.value.open || !sku || quantity.value > Math.min(50, sku.stock)) {
+    notify('所选规格库存不足，请调整数量或规格')
+    return
+  }
+  directLine.value = {
+    key: JSON.stringify([product.id, sku.variant, sku.color]),
+    productId: product.id, variant: sku.variant, color: sku.color, quantity: quantity.value,
+  }
+  overlay.value = 'bag'
+  setCheckout(true)
 }
 function changeQuantity(l,d){const item=cart.value.find(v=>v.key===l.key);if(!item)return;const n=item.quantity+d;if(n<1){remove(l);return}const sum=cart.value.filter(v=>v.key===l.key).reduce((s,v)=>s+v.quantity,0);const sku=l.product.skus.find(s=>s.variant===l.variant&&s.color===l.color);if(d>0&&(sum>=(sku?.stock||0)||n>50)){notify('已达到当前可选数量');return}item.quantity=n;persist('suxu-bag-v1',cart.value)}
-function remove(l){cart.value=cart.value.filter(v=>v.key!==l.key);persist('suxu-bag-v1',cart.value)}
+type PendingOrder = {
+  accountNumber: string
+  data: {
+    items: Pick<BagLine, 'productId' | 'quantity' | 'variant' | 'color'>[]
+    customer: string
+    contact: string
+    note: string
+    pickup: string
+    fulfillment?: string
+    address?: string
+    key: string
+    expectedTotal: number
+  }
+  bagLines: Pick<BagLine, 'key' | 'quantity'>[]
+}
+const pendingOrder = ref<PendingOrder | null>(null)
+const canRetryOrder = computed(() => pendingOrder.value !== null &&
+  pendingOrder.value.accountNumber === (account.value?.number ?? ''))
+
+function remove(line: BagLine) {
+  checkedKeys.value.delete(line.key)
+  persist('suxu-bag-v1', cart.value.filter(item => item.key !== line.key))
+}
 async function submit() {
-  if (busy.value || unavailable.value || !settings.value.open || !lines.value.length) return
+  if (busy.value) return
+  if (canRetryOrder.value && pendingOrder.value) {
+    await sendOrder(pendingOrder.value)
+    return
+  }
+  if (checkoutTooLarge.value || unavailable.value || !settings.value.open || !checkoutLines.value.length) return
   if (!customer.value.trim()) { notify('请填写联系人称呼'); return }
   const delivering = fulfillment.value === 'delivery'
   if (!contact.value.trim()) { notify('请填写手机号或微信号'); return }
@@ -173,38 +269,61 @@ async function submit() {
   }
   if (!consent.value) { notify('请确认取货和付款方式'); return }
 
-  busy.value = true
-  ;(document.activeElement as HTMLElement | null)?.blur()
+  const submitted = checkoutLines.value
   const payload = {
-    items: lines.value.map(({ productId, quantity, variant, color }) => ({ productId, quantity, variant, color })),
+    items: submitted.map(({ productId, quantity, variant, color }) => ({ productId, quantity, variant, color })),
     customer: customer.value,
     contact: contact.value,
     note: note.value,
     pickup: delivering ? '' : pickup.value,
     ...(delivering ? { fulfillment: 'delivery', address: address.value } : {}),
   }
+  const accountNumber = account.value?.number ?? ''
+  const signature = JSON.stringify([accountNumber, payload])
+  let attempt = load('suxu-checkout-v1', null)
+  if (!attempt || attempt.signature !== signature) {
+    attempt = { key: randomKey(), signature }
+    persist('suxu-checkout-v1', attempt)
+  }
+  await sendOrder({
+    accountNumber,
+    data: { ...payload, key: attempt.key, expectedTotal: total.value },
+    bagLines: directLine.value ? [] : submitted.map(({key, quantity}) => ({key, quantity})),
+  })
+}
+
+async function sendOrder(attempt: PendingOrder) {
+  busy.value = true
+  ;(document.activeElement as HTMLElement | null)?.blur()
   try {
-    const signature = JSON.stringify([account.value?.number ?? '', payload])
-    let attempt = load('suxu-checkout-v1', null)
-    if (!attempt || attempt.signature !== signature) {
-      attempt = { key: randomKey(), signature }
-      persist('suxu-checkout-v1', attempt)
-    }
-    const data = { ...payload, key: attempt.key }
     const order = signedIn.value
-      ? await accountRequest('/orders', 'POST', data)
-      : await api('/orders', { method: 'POST', body: JSON.stringify(data) })
+      ? await accountRequest('/orders', 'POST', attempt.data)
+      : await api('/orders', { method: 'POST', body: JSON.stringify(attempt.data) })
     if (order.token) {
       history.value = [{ id: order.id, token: order.token }, ...history.value.filter(item => item.id !== order.id)].slice(0, 40)
       persist('suxu-orders-v1', history.value)
     }
     current.value = order
-    persist('suxu-bag-v1', [])
+    if (attempt.bagLines.length) {
+      const purchased = new Map(attempt.bagLines.map(line => [line.key, line.quantity]))
+      const remaining = cart.value.map(line => ({ ...line, quantity: line.quantity - (purchased.get(line.key) ?? 0) }))
+        .filter(line => line.quantity > 0)
+      persist('suxu-bag-v1', remaining)
+      for (const key of purchased.keys()) checkedKeys.value.delete(key)
+    }
+    pendingOrder.value = null
+    directLine.value = null
     persist('suxu-checkout-v1', null)
     consent.value = false
     note.value = ''
     open('success')
   } catch (error) {
+    if (!error.status || error.status >= 500 || error.status === 408 || error.status === 429) {
+      pendingOrder.value = attempt
+    } else {
+      pendingOrder.value = null
+      if (error.status === 409) consent.value = false
+    }
     notify(error.message)
   } finally {
     busy.value = false
@@ -265,6 +384,7 @@ async function signIn(register: boolean, input) {
 }
 
 watch(signedIn, (active, wasActive) => {
+  if (pendingOrder.value && !canRetryOrder.value) pendingOrder.value = null
   if (wasActive && !active) {
     customer.value = ''
     contact.value = ''
@@ -280,5 +400,5 @@ function keydown(e){if(e.key==='Escape')close();if(e.key==='Tab'&&overlay.value&
 watch(overlay,async(v,old)=>{document.body.style.overflow=v?'hidden':'';if(v&&!old)focusBefore=document.activeElement as HTMLElement;await nextTick();if(v){sheet.value?.scrollTo({top:0});sheet.value?.querySelector<HTMLElement>('button,input')?.focus({preventScroll:true});if(v==='search')searchInput.value?.focus()}else focusBefore?.focus?.({preventScroll:true})})
 onMounted(async()=>{void restoreAccount();try{await refresh()}catch{error.value='暂时无法连接精品店，请稍后重试'}finally{loading.value=false}document.addEventListener('keydown',keydown);interval=setInterval(async()=>{try{await refresh();if(current.value&&overlay.value==='success'){const shown=current.value;const updated=await getOrder(shown);if(current.value===shown)current.value=updated}}catch{error.value='连接暂时中断，正在重试…'}},5000)})
 onUnmounted(()=>{clearInterval(interval);clearTimeout(toastTimer);document.removeEventListener('keydown',keydown);document.body.style.overflow=''})
-return {categoryInfo,categories,visible,products,settings,loading,error,toast,category,sort,search,view,overlay,selected,variant,color,quantity,zoomed,accordion,cart,bagProducts,detailInBag,legacySaved,productSections,history,historyData,historyLoading,historyError,current,account,accountSecure,accountLoading,authError,signIn,saveAccount,logout,checkout,setCheckout,pickupOptions,returnToCheckout,returnToBag,loadOrders,customer,contact,note,pickup,busy,consent,service,fulfillment,address,deliveryRate,deliveryFee,orderStatus,collection,searchInput,sheet,lines,count,subtotal,total,unavailable,selectedSKU,statusLabels,year,serviceContent,money,close,open,openProduct,goCollection,runSearch,home,bagHeart,addToBag,changeQuantity,remove,submit,track,openOrders,showService}
+return {categoryInfo,categories,visible,products,settings,loading,error,toast,category,sort,search,view,overlay,selected,variant,color,quantity,zoomed,accordion,cart,bagProducts,detailInBag,legacySaved,productSections,history,historyData,historyLoading,historyError,current,account,accountSecure,accountLoading,authError,signIn,saveAccount,logout,checkout,setCheckout,pickupOptions,returnToCheckout,returnToBag,loadOrders,customer,contact,note,pickup,busy,consent,service,fulfillment,address,deliveryRate,deliveryFee,orderStatus,collection,searchInput,sheet,lines,count,subtotal,checkoutCount,checkoutTooLarge,checkoutLines,directLine,eligibleLines,checkedKeys,canRetryOrder,allChecked,someChecked,lineUnavailable,toggleLine,toggleAll,total,unavailable,selectedSKU,statusLabels,year,serviceContent,money,close,open,openProduct,goCollection,runSearch,home,bagHeart,buyNow,changeQuantity,remove,submit,track,openOrders,showService}
 }

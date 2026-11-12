@@ -81,12 +81,12 @@
   .bag-checkout.is-checkout { position: static; margin-bottom: 0; box-shadow: none; }
 }
 
-.detail-accordions p { white-space: pre-wrap; overflow-wrap: anywhere; }
-
+/* 商品选购与预约表单 */
 .boutique .s-primary, .boutique .s-outline, .variant-options button { border-radius: 12px; }
 .s-stepper { border-radius: 11px; overflow: hidden; }
 .boutique .s-sheet { border-radius: 24px 0 0 24px; }
 .boutique .s-center-sheet { border-radius: 22px; }
+.detail-accordions p { white-space: pre-wrap; overflow-wrap: anywhere; }
 .checkout-information input:not([type="radio"]), .checkout-information textarea, .account-form input {
   border-radius: 12px;
   background: #fcfaf4;
@@ -94,6 +94,14 @@
 }
 .checkout-information input::placeholder, .checkout-information textarea::placeholder { color: #796a55; }
 .checkout-information .fulfillment-options label > span { border-radius: 12px; }
+.checkout-summary { list-style: none; padding: 5px 13px; margin: 0 0 22px; border: 1px solid #e9e0d1; border-radius: 15px; background: #faf7ef; }
+.checkout-summary li { display: grid; grid-template-columns: 39px minmax(0, 1fr) auto; gap: 10px; align-items: center; padding: 9px 0; }
+.checkout-summary li + li { border-top: 1px solid #e9e0d1; }
+.checkout-summary img { width: 39px; height: 44px; border-radius: 7px; object-fit: cover; }
+.checkout-summary li > span { font-size: 13px; overflow-wrap: anywhere; }
+.checkout-summary small { display: block; font-size: 11px; color: #756347; margin-top: 4px; }
+.checkout-summary strong { font-size: 13px; font-variant-numeric: tabular-nums; }
+
 .pickup-options, .collection-sort { border: 0; padding: 0; min-width: 0; }
 .pickup-options { margin: 0 0 19px; display: grid; gap: 6px; }
 .pickup-options legend { padding: 0; margin: 0 0 8px; font-size: 13px; }
@@ -105,12 +113,30 @@
 .pickup-options label > span::before { content: ''; width: 14px; height: 14px; border-radius: 50%; border: 1px solid #8c7b5c; flex: 0 0 auto; }
 .pickup-options input:checked + span { border-color: #897551; background: #f0e8d6; }
 .pickup-options input:checked + span::before { background: #685834; box-shadow: inset 0 0 0 3px #f0e8d6; }
-.checkout-information .pickup-options input, .collection-sort input, .s-visually-hidden {
+
+.bag-check { display: inline-flex; align-items: center; position: relative; min-width: 30px; min-height: 44px; cursor: pointer; }
+.bag-check > span { display: grid; place-items: center; width: 20px; height: 20px; border: 1px solid #8b7b5d; border-radius: 50%; color: white; flex: 0 0 auto; }
+.bag-check input:checked + span, .bag-check input:indeterminate + span { background: #55523b; border-color: #55523b; }
+.bag-check input:checked + span::after { content: ''; width: 5px; height: 9px; border: solid white; border-width: 0 2px 2px 0; transform: translateY(-1px) rotate(45deg); }
+.bag-check input:indeterminate + span::after { content: ''; width: 8px; height: 2px; border-radius: 1px; background: white; }
+.bag-check input:disabled + span { opacity: .45; }
+.bag-check input, .checkout-information .pickup-options input, .collection-sort input, .s-visually-hidden {
   position: absolute; width: 1px; height: 1px; padding: 0; margin: 0; overflow: hidden; clip-path: inset(50%); white-space: nowrap; border: 0;
 }
-.pickup-options input:focus-visible + span, .collection-sort input:focus-visible + span {
+.bag-check input:focus-visible + span, .pickup-options input:focus-visible + span, .collection-sort input:focus-visible + span {
   outline: 2px solid #6f5a32; outline-offset: 2px;
 }
+.boutique .s-bag-line {
+  display: grid; grid-template-columns: auto clamp(72px, 20vw, 104px) minmax(0, 1fr); align-items: center; gap: 10px;
+  margin: 0 0 10px; padding: 10px; border: 1px solid #ebe3d6; border-radius: 16px; background: #fcfaf4;
+}
+.boutique .s-bag-line.is-checked { border-color: #b7a584; background: #f8f3e8; }
+.boutique .bag-line-image { width: 100%; height: auto; aspect-ratio: 4 / 5; border-radius: 10px; }
+.boutique .bag-line-description { padding: 0; }
+.bag-check-all { gap: 7px; font-size: 13px; color: #4e4432; white-space: nowrap; }
+.bag-subtotal.with-bag-select { gap: 8px; }
+.bag-subtotal.with-bag-select > span { margin-inline-start: auto; text-align: right; }
+
 .collection-toolbar { flex-wrap: wrap; row-gap: 6px; }
 .collection-sort { position: relative; display: flex; flex-wrap: wrap; gap: 5px; margin: 0; }
 .collection-sort label { position: relative; cursor: pointer; }
@@ -119,4 +145,11 @@
 @media (max-width: 720px) {
   .boutique .s-sheet { border-radius: 21px 21px 0 0; }
   .boutique .s-center-sheet { border-radius: 21px; }
+  .boutique .s-bag-line { padding: 8px; gap: 7px; }
+  .boutique .bag-line-description h3 { line-height: 1.4; }
+  .bag-subtotal.with-bag-select > span small { display: block; margin: 3px 0 0; }
+  .collection-sort label span { min-height: 42px; }
 }
+
+.checkout-form-fields { margin: 0; padding: 0; min-width: 0; border: 0; }
+.checkout-retry { color: #635338; margin: 0 0 14px; font-size: 13px; line-height: 1.5; }

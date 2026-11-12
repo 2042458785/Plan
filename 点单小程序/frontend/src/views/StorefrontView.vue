@@ -3,7 +3,7 @@ import Icon from '@/components/Icon.vue'
 import CustomerAccount from '@/components/CustomerAccount.vue'
 import { quickShopURL } from '@/config'
 import {useStorefront} from '@/composables/useStorefront'
-const {categoryInfo,categories,visible,products,settings,loading,error,toast,category,sort,search,view,overlay,selected,variant,color,quantity,zoomed,accordion,bagProducts,detailInBag,legacySaved,productSections,historyData,historyLoading,historyError,current,account,accountSecure,accountLoading,authError,signIn,saveAccount,logout,checkout,setCheckout,pickupOptions,returnToCheckout,returnToBag,loadOrders,customer,contact,note,pickup,busy,consent,service,fulfillment,address,deliveryRate,deliveryFee,orderStatus,collection,searchInput,sheet,lines,count,subtotal,total,unavailable,selectedSKU,year,serviceContent,money,close,open,openProduct,goCollection,runSearch,home,bagHeart,addToBag,changeQuantity,remove,submit,track,openOrders,showService}=useStorefront()
+const {categoryInfo,categories,visible,products,settings,loading,error,toast,category,sort,search,view,overlay,selected,variant,color,quantity,zoomed,accordion,bagProducts,detailInBag,legacySaved,productSections,historyData,historyLoading,historyError,current,account,accountSecure,accountLoading,authError,signIn,saveAccount,logout,checkout,setCheckout,pickupOptions,returnToCheckout,returnToBag,loadOrders,customer,contact,note,pickup,busy,consent,service,fulfillment,address,deliveryRate,deliveryFee,orderStatus,collection,searchInput,sheet,lines,count,subtotal,checkoutCount,checkoutTooLarge,checkoutLines,directLine,eligibleLines,checkedKeys,canRetryOrder,allChecked,someChecked,lineUnavailable,toggleLine,toggleAll,total,unavailable,selectedSKU,year,serviceContent,money,close,open,openProduct,goCollection,runSearch,home,bagHeart,buyNow,changeQuantity,remove,submit,track,openOrders,showService}=useStorefront()
 </script>
 <template>
 <div class="boutique">
@@ -31,8 +31,8 @@ const {categoryInfo,categories,visible,products,settings,loading,error,toast,cat
   <footer class="s-footer"><div class="footer-upper"><div class="footer-brand"><span>SUXU</span><small>素序 · 生活选物</small><p>好物有序，日常有光。</p></div><div class="footer-column"><h3>探索素序</h3><button v-for="name in categories.slice(1)" :key="name" @click="goCollection(name)">{{ name }}系列</button><a class="s-quick-link" :href="quickShopURL">快速小程序</a></div><div class="footer-column"><h3>客户关怀</h3><button @click="openOrders()">我的账号与预约</button><button @click="showService('size')">尺寸与选购</button><button @click="showService('care')">养护与售后</button></div><div class="footer-column footer-visit"><h3>相见于素序</h3><span>{{ settings.location }}</span><span>{{ settings.hours }}</span><button @click="showService('pickup')">查看取货方式 <Icon name="arrow" :size="15"/></button><span class="store-open"><i :class="{closed:!settings.open}"></i>{{ settings.open?'现正接受预约':'预约暂歇，欢迎浏览' }}</span></div></div><div class="footer-bottom"><span>© {{ year }} SUXU. ALL RIGHTS RESERVED.</span><span>独立审美 · 用心选物</span></div></footer>
   <nav class="mobile-bottom-nav" aria-label="快捷导航"><button :class="{active:view==='home'}" @click="home"><Icon name="diamond" :size="19"/><span>首页</span></button><button @click="goCollection()"><Icon name="menu" :size="19"/><span>系列</span></button><button @click="openOrders()"><Icon name="user" :size="19"/><span>我的</span></button><button @click="open('bag')"><span class="mobile-bag-icon"><Icon name="bag" :size="19"/><i v-if="count">{{ count }}</i></span><span>购物袋</span></button></nav>
   </template>
-  <Transition name="veil"><div v-if="overlay" class="s-overlay" :class="{'product-overlay':overlay==='product'}" @click.self="close"><section ref="sheet" class="s-sheet" :class="{'s-product-sheet':overlay==='product','s-center-sheet':['service','success'].includes(overlay)}" role="dialog" aria-modal="true" :aria-label="{product:'商品详情',bag:'购物袋',search:'搜索商品',orders:'我的账号与预约',success:'预约详情',service:'客户服务',navigation:'系列导航'}[overlay]"><button class="sheet-close icon-button" aria-label="关闭窗口" @click="close"><Icon name="close" :size="22"/></button>
-    <template v-if="overlay==='product'&&selected"><div class="detail-image" :class="{zoomed}"><img :src="selected.image" :alt="selected.name"/><button class="icon-button detail-zoom" :aria-label="zoomed?'缩小商品图':'放大商品图'" @click="zoomed=!zoomed"><Icon name="expand"/></button><span class="image-caption">SUXU · {{ selected.english }}</span></div><div class="detail-information"><span class="s-eyebrow">{{ selected.category }} / {{ selected.english }}</span><div class="detail-title"><h2>{{ selected.name }}</h2><button class="icon-button" :class="{saved:detailInBag}" :aria-label="(detailInBag?'管理购物袋中的':'加入购物袋 ')+selected.name"  :aria-pressed="detailInBag" @click="bagHeart(selected)"><Icon name="heart"/></button></div><p class="detail-description">{{ selected.description }}</p><strong class="detail-price">¥ {{ money(selected.price) }}</strong><div class="detail-color"><span>颜色 <b>{{ color||'请选择' }}</b></span><div class="color-options"><button v-for="c in selected.colors" :key="c" :class="{selected:color===c}" @click="color=c" :aria-label="'选择颜色'+c" :aria-pressed="color===c"><i :style="{background:({'奶油白':'#e6dfcf','燕麦色':'#cbb89a','墨黑':'#282824','银白色':'linear-gradient(135deg,#fff,#a5a5a5,#fff)','香槟金':'linear-gradient(135deg,#e0c99e,#b99a62,#e8d7ad)','象牙白':'#f1eadb','苔绿':'#6f7d5b'})[c]||'#c2b69f'}"></i></button></div></div><div class="size-heading"><span>尺寸 / 规格 <b v-if="variant">{{ variant }}</b></span><button @click="showService('size')">选购指南 <Icon name="arrow" :size="13"/></button></div><div class="variant-options"><button v-for="v in selected.options" :key="v" :class="{selected:variant===v}" :aria-pressed="variant===v" @click="variant=v">{{ v }}</button></div><div class="detail-quantity"><span>数量</span><div class="s-stepper"><button :disabled="quantity<=1" aria-label="减少购买数量" @click="quantity--"><Icon name="minus" :size="14"/></button><span>{{ quantity }}</span><button :disabled="quantity>=Math.min(selectedSKU?.stock||0,50)" aria-label="增加购买数量" @click="quantity++"><Icon name="plus" :size="14"/></button></div><small>{{ !variant?'请选择规格':selectedSKU?.stock>0?'可预约':'此规格暂时售罄' }}</small></div><button class="s-primary detail-add" :disabled="!selected.available||!selected.stock||selectedSKU?.stock===0||!settings.open" @click="addToBag">{{ !selected.available||!selected.stock?'暂时售罄':!settings.open?'暂停预约':'加入购物袋' }} <Icon name="bag" :size="19"/></button><p class="detail-assurance"><Icon name="check" :size="13"/>支持自提和送货上门</p><div class="detail-accordions"><div v-for="section in productSections" :key="section.key">
+  <Transition name="veil"><div v-if="overlay" class="s-overlay" :class="{'product-overlay':overlay==='product'}" @click.self="close"><section ref="sheet" class="s-sheet" :class="{'s-product-sheet':overlay==='product','s-center-sheet':['service','success'].includes(overlay)}" role="dialog" aria-modal="true" :aria-label="{product:'商品详情',bag:checkout?'填写预约':'购物袋',search:'搜索商品',orders:'我的账号与预约',success:'预约详情',service:'客户服务',navigation:'系列导航'}[overlay]"><button class="sheet-close icon-button" aria-label="关闭窗口" @click="close"><Icon name="close" :size="22"/></button>
+    <template v-if="overlay==='product'&&selected"><div class="detail-image" :class="{zoomed}"><img :src="selected.image" :alt="selected.name"/><button class="icon-button detail-zoom" :aria-label="zoomed?'缩小商品图':'放大商品图'" @click="zoomed=!zoomed"><Icon name="expand"/></button><span class="image-caption">SUXU · {{ selected.english }}</span></div><div class="detail-information"><span class="s-eyebrow">{{ selected.category }} / {{ selected.english }}</span><div class="detail-title"><h2>{{ selected.name }}</h2><button class="icon-button" :class="{saved:detailInBag}" :aria-label="(detailInBag?'管理购物袋中的':'加入购物袋 ')+selected.name"  :aria-pressed="detailInBag" @click="bagHeart(selected)"><Icon name="heart"/></button></div><p class="detail-description">{{ selected.description }}</p><strong class="detail-price">¥ {{ money(selected.price) }}</strong><div class="detail-color"><span>颜色 <b>{{ color||'请选择' }}</b></span><div class="color-options"><button v-for="c in selected.colors" :key="c" :class="{selected:color===c}" @click="color=c" :aria-label="'选择颜色'+c" :aria-pressed="color===c"><i :style="{background:({'奶油白':'#e6dfcf','燕麦色':'#cbb89a','墨黑':'#282824','银白色':'linear-gradient(135deg,#fff,#a5a5a5,#fff)','香槟金':'linear-gradient(135deg,#e0c99e,#b99a62,#e8d7ad)','象牙白':'#f1eadb','苔绿':'#6f7d5b'})[c]||'#c2b69f'}"></i></button></div></div><div class="size-heading"><span>尺寸 / 规格 <b v-if="variant">{{ variant }}</b></span><button @click="showService('size')">选购指南 <Icon name="arrow" :size="13"/></button></div><div class="variant-options"><button v-for="v in selected.options" :key="v" :class="{selected:variant===v}" :aria-pressed="variant===v" @click="variant=v">{{ v }}</button></div><div class="detail-quantity"><span>数量</span><div class="s-stepper"><button :disabled="quantity<=1" aria-label="减少购买数量" @click="quantity--"><Icon name="minus" :size="14"/></button><span>{{ quantity }}</span><button :disabled="quantity>=Math.min(selectedSKU?.stock||0,50)" aria-label="增加购买数量" @click="quantity++"><Icon name="plus" :size="14"/></button></div><small>{{ !variant?'请选择规格':selectedSKU?.stock>0?'可预约':'此规格暂时售罄' }}</small></div><button class="s-primary detail-add" :disabled="!selected.available||!selected.stock||selectedSKU?.stock===0||!settings.open" @click="buyNow">{{ !selected.available||!selected.stock?'暂时售罄':!settings.open?'暂停预约':'立即购买' }} <Icon name="arrow" :size="19"/></button><p class="detail-assurance"><Icon name="check" :size="13"/>支持自提和送货上门</p><div class="detail-accordions"><div v-for="section in productSections" :key="section.key">
           <button type="button" :aria-expanded="accordion===section.key" @click="accordion=accordion===section.key?'':section.key">{{ section.name }}<Icon :name="accordion===section.key?'minus':'plus'" :size="15"/></button>
           <p v-if="accordion===section.key">{{ section.text }}</p>
         </div></div></div></template>
@@ -41,9 +41,14 @@ const {categoryInfo,categories,visible,products,settings,loading,error,toast,cat
         <h2 data-checkout-heading tabindex="-1">{{ checkout ? '填写预约' : '我的购物袋' }} <span v-if="!checkout">({{ count }})</span></h2>
         <p v-if="checkout">提交后由商家确认，取货时付款。</p>
       </div>
-      <template v-if="count">
+      <template v-if="count || checkout">
         <div v-if="!checkout" class="bag-scroll">
-          <div v-for="l in lines" :key="l.key" class="s-bag-line">
+          <div v-for="l in lines" :key="l.key" class="s-bag-line" :class="{ 'is-checked': checkedKeys.has(l.key) }">
+            <label class="bag-check">
+              <input type="checkbox" :checked="checkedKeys.has(l.key)" :disabled="lineUnavailable(l) && !checkedKeys.has(l.key)"
+                :aria-label="'选择 ' + l.product.name + ' · ' + l.variant + ' · ' + l.color" @change="toggleLine(l)">
+              <span aria-hidden="true"></span>
+            </label>
             <button class="bag-line-image" @click="openProduct(l.product)"><img :src="l.product.image" :alt="l.product.name"></button>
             <div class="bag-line-description">
               <small v-if="l.product.english">{{ l.product.english }}</small>
@@ -58,18 +63,27 @@ const {categoryInfo,categories,visible,products,settings,loading,error,toast,cat
                 </div>
                 <button class="remove-line" @click="remove(l)">移除</button>
               </div>
-              <span v-if="!l.product.available||(l.product.skus.find(s=>s.variant===l.variant&&s.color===l.color)?.stock||0)<l.quantity" class="s-danger">所选规格库存不足，请调整数量或移除。</span>
+              <span v-if="lineUnavailable(l)" class="s-danger">所选规格库存不足，请调整数量或移除。</span>
             </div>
           </div>
         </div>
         <div v-else class="bag-scroll checkout-information">
-          <button class="checkout-back" type="button" @click="setCheckout(false)">← 返回购物袋</button>
+          <button class="checkout-back" type="button" :disabled="busy" @click="setCheckout(false)">← {{ directLine ? '返回商品' : '返回购物袋' }}</button>
+          <ul v-if="checkoutLines.length" class="checkout-summary" aria-label="本次预约商品">
+            <li v-for="line in checkoutLines" :key="line.key">
+              <img :src="line.product.image" alt="">
+              <span>{{ line.product.name }}<small>{{ line.variant }} · {{ line.color }} × {{ line.quantity }}</small></span>
+              <strong>¥ {{ money(line.quantity * line.product.price) }}</strong>
+            </li>
+          </ul>
+          <p v-else-if="!canRetryOrder" class="s-danger" role="status">所选商品已下架，请返回重新选择。</p>
+          <fieldset class="checkout-form-fields" :disabled="busy || canRetryOrder">
           <div v-if="account" class="checkout-account">
             <div><strong>{{ account.name }}</strong><span>{{ account.contact }} · {{ account.number }}</span></div>
-            <button type="button" @click="openOrders(true)">编辑资料</button>
+            <button type="button" :disabled="busy" @click="openOrders(true)">编辑资料</button>
           </div>
           <template v-else>
-            <button v-if="accountSecure" class="checkout-back" type="button" @click="openOrders(true)">登录后自动填写顾客资料</button>
+            <button v-if="accountSecure" class="checkout-back" type="button" :disabled="busy" @click="openOrders(true)">登录后自动填写顾客资料</button>
             <div class="checkout-fields">
               <label>联系人称呼 <span>*</span><input v-model="customer" maxlength="30" placeholder="请填写称呼" autocomplete="name"></label>
               <label>联系方式 <span>*</span><input v-model="contact" maxlength="40" placeholder="手机号或微信号" autocomplete="off"></label>
@@ -91,6 +105,7 @@ const {categoryInfo,categories,visible,products,settings,loading,error,toast,cat
             <input v-model="address" maxlength="100" placeholder="请填写寝室楼栋和寝室号，例如 3 栋 508" autocomplete="street-address">
           </label>
           <label>给主理人留言 <small>选填</small><textarea v-model="note" maxlength="180" rows="2" placeholder="尺寸咨询或其他需求"></textarea></label>
+          </fieldset>
         </div>
       </template>
       <div v-else class="s-empty bag-empty">
@@ -100,21 +115,29 @@ const {categoryInfo,categories,visible,products,settings,loading,error,toast,cat
       <section v-if="!checkout && legacySaved.length" class="legacy-saved">
         <h3>之前收藏的商品</h3>
         <button v-for="p in legacySaved" :key="p.id" type="button" @click="openProduct(p)">
-          <img :src="p.image" :alt="p.name"><span>{{ p.name }}<small>选择规格后加入购物袋</small></span><Icon name="arrow" :size="16"/>
+          <img :src="p.image" :alt="p.name"><span>{{ p.name }}<small>选好规格后点爱心加入购物袋</small></span><Icon name="arrow" :size="16"/>
         </button>
       </section>
-      <div v-if="count" class="bag-checkout" :class="{ 'is-checkout': checkout }" v-loading="busy" element-loading-background="rgba(255,254,250,0.8)">
+      <div v-if="count || checkout" class="bag-checkout" :class="{ 'is-checkout': checkout }" v-loading="busy" element-loading-background="rgba(255,254,250,0.8)">
         <div v-if="checkout && deliveryFee" class="bag-subtotal delivery-fee"><span>配送费</span><span>¥ {{ money(deliveryFee) }}</span></div>
-        <div class="bag-subtotal"><span>{{ checkout ? '合计' : '商品小计' }} <small>{{ count }} 件商品</small></span><strong>¥ {{ money(checkout ? total : subtotal) }}</strong></div>
+        <div class="bag-subtotal" :class="{ 'with-bag-select': !checkout }">
+          <label v-if="!checkout" class="bag-check bag-check-all">
+            <input type="checkbox" :checked="allChecked" :indeterminate.prop="someChecked" :disabled="!eligibleLines.length" @change="toggleAll">
+            <span aria-hidden="true"></span>全选
+          </label>
+          <span aria-live="polite">{{ checkout ? '合计' : '已选小计' }} <small>{{ checkoutCount }} 件商品</small></span>
+          <strong>¥ {{ money(checkout ? total : subtotal) }}</strong>
+        </div>
         <template v-if="checkout">
-          <label class="consent-checkbox"><input v-model="consent" type="checkbox"><span>{{ fulfillment === 'delivery' ? '我已确认配送地址和费用。' : '我已确认自提安排。' }}</span></label>
-          <button class="s-primary" :disabled="busy || unavailable || !settings.open" @click="submit">
-            {{ busy ? '正在提交预约…' : !settings.open ? '店铺暂停预约' : unavailable ? '请调整购物袋中的商品' : '提交预约' }} <Icon name="arrow" :size="18"/>
+          <p v-if="canRetryOrder" class="checkout-retry" role="status">上次提交未收到确认，可以用原信息重试。</p>
+          <label v-else class="consent-checkbox"><input v-model="consent" type="checkbox"><span>{{ fulfillment === 'delivery' ? '我已确认配送地址和费用。' : '我已确认自提安排。' }}</span></label>
+          <button class="s-primary" :disabled="busy || (!canRetryOrder && (unavailable || !settings.open || !checkoutCount || checkoutTooLarge))" @click="submit">
+            {{ busy ? '正在提交预约…' : canRetryOrder ? '重试原预约' : !settings.open ? '店铺暂停预约' : unavailable || !checkoutCount ? '请重新选择可购商品' : '提交预约' }} <Icon name="arrow" :size="18"/>
           </button>
           <small class="no-charge-note">提交预约不会在线扣款</small>
         </template>
-        <button v-else class="s-primary" :disabled="unavailable || !settings.open" @click="setCheckout(true)">
-          {{ !settings.open ? '店铺暂停预约' : unavailable ? '请调整购物袋中的商品' : '继续填写预约' }} <Icon name="arrow" :size="18"/>
+        <button v-else class="s-primary" :disabled="unavailable || !settings.open || !checkoutCount || checkoutTooLarge" @click="setCheckout(true)">
+          {{ !settings.open ? '店铺暂停预约' : checkoutTooLarge ? '单次最多结算 30 个规格' : unavailable ? '请调整所选商品' : !checkoutCount ? '请勾选商品' : '继续填写预约' }} <Icon name="arrow" :size="18"/>
         </button>
       </div>
     </template>
