@@ -69,12 +69,16 @@ const {categories,visible,settings,loading,error,toast,category,overlay,selected
           </template>
           <fieldset class="fulfillment-options">
             <legend>取货方式</legend>
-            <label><input v-model="fulfillment" type="radio" value="pickup"><span>自提</span></label>
-            <label><input v-model="fulfillment" type="radio" value="delivery"><span>送货上门 <small>+¥ {{ money(deliveryRate) }}</small></span></label>
+            <label><input v-model="fulfillment" type="radio" name="fulfillment" value="pickup"><span>自提</span></label>
+            <label><input v-model="fulfillment" type="radio" name="fulfillment" value="delivery"><span>送货上门 <small>+¥ {{ money(deliveryRate) }}</small></span></label>
           </fieldset>
-          <label v-if="fulfillment === 'pickup'">自提时间
-            <select v-model="pickup"><option v-for="option in pickupOptions" :key="option">{{ option }}</option></select>
-          </label>
+          <fieldset v-if="fulfillment === 'pickup'" class="pickup-options">
+            <legend>自提时间</legend>
+            <label v-for="option in pickupOptions" :key="option">
+              <input v-model="pickup" name="pickup-time" type="radio" :value="option">
+              <span>{{ option }}</span>
+            </label>
+          </fieldset>
           <label v-else>配送地址 <span>*</span>
             <input v-model="address" maxlength="100" placeholder="请填写寝室楼栋和寝室号，例如 3 栋 508" autocomplete="street-address">
           </label>

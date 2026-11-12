@@ -85,7 +85,7 @@ it('使用后台封面，购物袋和预约分两步，自提只提供三种安�
   await wrapper.get('button[aria-label="打开购物袋"]').trigger('click')
   expect(wrapper.find('.checkout-information').exists()).toBe(false)
   await button('继续填写预约').trigger('click')
-  expect(wrapper.findAll('.checkout-information select option').map(option => option.text())).toEqual(['今日营业时间内自提','明日喜提','和店家商量时间'])
+  expect(wrapper.findAll('.pickup-options label').map(option => option.text())).toEqual(['今日营业时间内自提','明日营业时间内自提','和店家商量时间'])
   await wrapper.get('input[value="delivery"]').setValue(true)
   expect(wrapper.get('input[autocomplete="street-address"]').attributes('placeholder')).toContain('寝室楼栋和寝室号')
 })

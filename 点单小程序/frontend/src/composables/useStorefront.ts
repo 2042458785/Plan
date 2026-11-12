@@ -16,7 +16,7 @@ const customer=ref(''),contact=ref(''),note=ref(''),pickup=ref('今日营业时�
 const fulfillment = ref<'pickup' | 'delivery'>('pickup'), address = ref(''), deliveryRate = ref(200)
 const serviceReturn=ref('');const collection=ref<HTMLElement|null>(null),searchInput=ref<HTMLInputElement|null>(null),sheet=ref<HTMLElement|null>(null)
 const checkout = ref(false), returnToCheckout = ref(false), historyLoading = ref(false), historyError = ref('')
-const pickupOptions = ['今日营业时间内自提', '明日喜提', '和店家商量时间']
+const pickupOptions = ['今日营业时间内自提', '明日营业时间内自提', '和店家商量时间']
 const { account, secure: accountSecure, loading: accountLoading, authError, signedIn, request: accountRequest, restore: restoreAccount, authenticate, save: saveAccount, logout } = useCustomer(notify)
 let interval,toastTimer;let focusBefore:HTMLElement|null=null
 function load(k,d){try{return JSON.parse(localStorage.getItem(k))??d}catch{return d}}
