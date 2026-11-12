@@ -205,3 +205,72 @@
   .metric-grid article > p { font-size: 11px; line-height: 1.4; }
   .page-heading { gap: 12px; margin-bottom: 19px; }
 }
+
+/* Merchant workspace presentation. */
+:root {
+  --ink: #292f26;
+  --muted: #635c4d;
+  --paper: #fffdf7;
+  --line: #ded8ca;
+  --control-text: #383a2d;
+  --control-border: #d7d1c2;
+  --control-focus: #626f52;
+  --workspace-ease: cubic-bezier(.22, .75, .25, 1);
+}
+body { background: #f3f0e8; }
+.atelier-sidebar { background: #faf8f1; border-color: var(--line); }
+.atelier-logo { color: #333c2e; margin-bottom: 20px; }
+.atelier-sidebar nav > a { color: #535745; border-radius: 8px; min-height: 44px; font-size: 13px; }
+.atelier-sidebar nav > a.router-link-active { background: #3c4734; color: #fffdf5; }
+.atelier-top { background: #faf8f2; color: #615b4d; }
+.atelier-main > div { animation: workspace-arrive .38s var(--workspace-ease) both; }
+.atelier-panel, .metric-grid article { background: var(--paper); border: 1px solid var(--line); border-radius: 12px; }
+.panel-toolbar h2, .page-heading h1 { color: #313a2c; letter-spacing: .015em; }
+.page-heading p { color: #645d4e; font-size: 13px; }
+.metric-grid article.metric-warm { background: #e9eddf; }
+.metric-grid article > strong { color: #333c2e; }
+.reservation-card { background: #fffdf7; border-color: var(--line); }
+.reservation-card h2, .reservation-amount strong { color: #313a2c; }
+.el-button { color: #545741; background: #fffdf7; border-color: var(--control-border); }
+.el-button--primary { background: #3c4734; border-color: #3c4734; color: #fffdf5; }
+.el-button--primary:focus, .el-button--primary:hover { background: #505d44; border-color: #505d44; }
+.el-button--text { background: transparent; border-color: transparent; }
+.el-button:not(.is-disabled) { transition: background-color .18s ease, color .18s ease, border-color .18s ease, transform .18s var(--workspace-ease); }
+.el-button:active:not(.is-disabled) { transform: scale(.98); }
+.el-input__inner, .el-textarea__inner { background: #fffdf7; }
+.el-input__inner:focus, .el-textarea__inner:focus { box-shadow: 0 0 0 2px #626f5226; }
+.el-dialog__title { color: #37412f; letter-spacing: .02em; }
+.dialog-fade-enter-active, .dialog-fade-leave-active { animation-duration: .23s; }
+.merchant-login { background: #f8f5ec; grid-template-columns: minmax(0, 1.1fr) minmax(0, .9fr); }
+.merchant-login .login-editorial { background: #e9e3d4; padding: clamp(24px, 6vw, 84px); }
+.merchant-login .login-wordmark { color: #343d2f; margin: 0 0 20px; animation: workspace-arrive .55s var(--workspace-ease) both; }
+.merchant-login .login-editorial img {
+  position: static; display: block; width: 100%; height: auto; max-height: none; aspect-ratio: 1.14;
+  margin: 0; border-radius: 14px; opacity: 1; object-position: 72% center;
+  animation: workspace-image-in .78s var(--workspace-ease) both;
+}
+.merchant-login .login-side { padding: clamp(24px, 5vw, 72px); }
+.merchant-login-form { width: 410px; padding: clamp(20px, 3.2vw, 40px); background: #fffdf7; border: 1px solid var(--line); border-radius: 16px; animation: workspace-arrive .56s .08s var(--workspace-ease) both; }
+.merchant-login-form > h2 { color: #333c2e; font-size: clamp(24px, 3.3vw, 34px); margin: 0 0 23px; letter-spacing: .02em; }
+.merchant-login-form > small { color: #635c4d; font-size: 12px; margin-top: 15px; }
+@keyframes workspace-arrive {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes workspace-image-in {
+  from { opacity: .52; transform: translateY(7px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@media (max-width: 640px) {
+  .atelier-sidebar .atelier-logo { margin: 0; }
+  .atelier-sidebar nav > a { font-size: 12px; }
+  .merchant-login .login-editorial { padding: 16px 20px; }
+  .merchant-login .login-wordmark { margin: 0; }
+  .merchant-login .login-side { padding: 22px 16px; }
+  .merchant-login .login-editorial img { display: none; }
+  .merchant-login-form { width: 100%; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .atelier-main > div, .merchant-login .login-wordmark, .merchant-login .login-editorial img,
+  .merchant-login-form { animation: none; }
+}
